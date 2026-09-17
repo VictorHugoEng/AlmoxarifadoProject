@@ -2,9 +2,9 @@
 
 ## 🔒 Versões Suportadas
 
-| Versão | Suportada | Status |
-|--------|-----------|--------|
-| 1.x.x  | ✅        | Ativa  |
+| Versão | Suportada | Status        |
+| ------ | --------- | ------------- |
+| 1.x.x  | ✅        | Ativa         |
 | < 1.0  | ❌        | Não suportada |
 
 ## 🚨 Reportando Vulnerabilidades
@@ -14,12 +14,14 @@
 Envie relatório privado para: **victorhugoeng@email.com**
 
 Inclua:
+
 - Descrição da vulnerabilidade
 - Passos para reproduzir
 - Impacto potencial
 - Sugestão de mitigação (se tiver)
 
 Responderemos em **48h** com:
+
 - Confirmação de recebimento
 - Avaliação inicial
 - Timeline estimada para fix
@@ -27,6 +29,7 @@ Responderemos em **48h** com:
 ## 🛡️ Hardening Implementado
 
 ### Autenticação & Autorização
+
 - **scrypt** (N=16384, r=8, p=1) + salt 16 bytes para hash de senhas
 - Tokens de sessão 256-bit (`crypto.randomBytes(32)`)
 - Comparação em tempo constante (`timingSafeEqual`)
@@ -35,6 +38,7 @@ Responderemos em **48h** com:
 - RBAC estrito: `ADMIN_MASTER`, `OPERADOR`, `COMPRAS`, `CONSULTA`
 
 ### Proteção de Dados
+
 - SQLite WAL mode + `synchronous=FULL` (ACID garantido)
 - Backup automático local (30 dias retenção)
 - Sync contínuo Google Drive (OAuth 2.0)
@@ -43,12 +47,14 @@ Responderemos em **48h** com:
 - `trust proxy` para IP real atrás de proxy/ngrok
 
 ### Auditoria & Monitoramento
+
 - Log imutável de eventos sensíveis (padrão bancário)
 - Eventos auditados: login, RBAC changes, CRUD sensível, backup, nuvem, admin actions
 - Retenção: 200 últimos eventos via API, completo no banco
 - Rate limit logs para detecção de ataques
 
 ### Princípios de Segurança
+
 - **Defesa em profundidade**: múltiplas camadas
 - **Menor privilégio**: roles granulares
 - **Fail-safe**: bloqueio por padrão
@@ -76,13 +82,13 @@ Responderemos em **48h** com:
 
 ## 🏷️ Labels de Segurança
 
-| Label | Uso |
-|-------|-----|
-| `security` | Vulnerabilidade confirmada |
-| `security:low` | Baixo risco |
-| `security:medium` | Médio risco |
-| `security:high` | Alto risco |
-| `security:critical` | Crítico - patch imediato |
+| Label               | Uso                        |
+| ------------------- | -------------------------- |
+| `security`          | Vulnerabilidade confirmada |
+| `security:low`      | Baixo risco                |
+| `security:medium`   | Médio risco                |
+| `security:high`     | Alto risco                 |
+| `security:critical` | Crítico - patch imediato   |
 
 ## 📚 Referências
 

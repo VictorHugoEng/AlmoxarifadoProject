@@ -19,7 +19,8 @@ function restaurarBackupMaisRecente() {
   try {
     if (!fs.existsSync(PASTA_BACKUPS)) return false;
 
-    const arquivos = fs.readdirSync(PASTA_BACKUPS)
+    const arquivos = fs
+      .readdirSync(PASTA_BACKUPS)
       .filter(f => f.startsWith('voltstock_') && f.endsWith('.db'))
       .sort();
     if (arquivos.length === 0) return false;
@@ -33,20 +34,28 @@ function restaurarBackupMaisRecente() {
 
     // Remove restos (WAL/SHM) do banco apagado para não conflitar com a restauração
     for (const suf of ['-wal', '-shm']) {
-      try { fs.unlinkSync(DB_PATH + suf); } catch (e) {}
+      try {
+        fs.unlinkSync(DB_PATH + suf);
+      } catch (e) {}
     }
 
     // Promove o backup restaurado para o banco principal
     fs.copyFileSync(backupTmp, DB_PATH);
-    try { fs.unlinkSync(backupTmp); } catch (e) {}
+    try {
+      fs.unlinkSync(backupTmp);
+    } catch (e) {}
 
     // Registra a recuperação no histórico de backups
     try {
-      fs.appendFileSync(path.join(PASTA_BACKUPS, 'historico_backups.txt'),
-        `[${new Date().toLocaleString('pt-BR')}] RECUPERACAO AUTOMATICA: banco principal ausente/corrompido -> restaurado de ${maisRecente}\n`);
+      fs.appendFileSync(
+        path.join(PASTA_BACKUPS, 'historico_backups.txt'),
+        `[${new Date().toLocaleString('pt-BR')}] RECUPERACAO AUTOMATICA: banco principal ausente/corrompido -> restaurado de ${maisRecente}\n`
+      );
     } catch (e) {}
 
-    console.log(`[Recuperação Automática] Banco principal não encontrado. Restaurando do backup: ${maisRecente}...`);
+    console.log(
+      `[Recuperação Automática] Banco principal não encontrado. Restaurando do backup: ${maisRecente}...`
+    );
     return true;
   } catch (e) {
     console.error('[Recuperação Automática] Falha ao restaurar backup:', e.message);
@@ -77,7 +86,7 @@ function restaurarDaNuvem() {
       env: { ...process.env, SERVMIL_NO_RECOVER: '1' },
       timeout: 60000,
       stdio: ['ignore', 'pipe', 'pipe'],
-      encoding: 'utf8'
+      encoding: 'utf8',
     });
 
     // Confirma que o arquivo restaurado é um SQLite íntegro
@@ -102,7 +111,9 @@ function restaurarDaNuvem() {
 if (!SKIP_RECUPERACAO) {
   if (!fs.existsSync(DB_PATH)) {
     if (!restaurarBackupMaisRecente() && !restaurarDaNuvem()) {
-      console.log('[Recuperação Automática] Nenhum backup local nem nuvem encontrado. Criando banco novo...');
+      console.log(
+        '[Recuperação Automática] Nenhum backup local nem nuvem encontrado. Criando banco novo...'
+      );
     }
   }
 }
@@ -153,7 +164,7 @@ function gerarHashSenha(senhaPura) {
   const derivedKey = crypto.scryptSync(senhaPura, salt, 64);
   return {
     salt,
-    hash: derivedKey.toString('hex')
+    hash: derivedKey.toString('hex'),
   };
 }
 
@@ -346,27 +357,28 @@ function initDatabase() {
     console.log('[Segurança ServMil] Cadastrando Administrador Master (anderson)...');
     const { salt, hash } = gerarHashSenha('123456');
 
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO usuarios (username, password_hash, salt, nome_completo, cargo, role, ativo)
       VALUES (?, ?, ?, ?, ?, ?, 1)
-    `).run(
-      'anderson',
-      hash,
-      salt,
-      'Anderson',
-      'Administrador Geral do Sistema',
-      'ADMIN_MASTER'
+    `
+    ).run('anderson', hash, salt, 'Anderson', 'Administrador Geral do Sistema', 'ADMIN_MASTER');
+    console.log(
+      '[Segurança ServMil] Administrador Master (anderson) criado com sucesso e protegido com scrypt/256-bit!'
     );
-    console.log('[Segurança ServMil] Administrador Master (anderson) criado com sucesso e protegido com scrypt/256-bit!');
   }
 
   // Migração segura de colunas se banco já existir
   try {
-    db.exec('ALTER TABLE solicitacoes_compras ADD COLUMN feedback_compras TEXT DEFAULT "Aguardando cotação";');
+    db.exec(
+      'ALTER TABLE solicitacoes_compras ADD COLUMN feedback_compras TEXT DEFAULT "Aguardando cotação";'
+    );
   } catch (e) {}
 
   try {
-    db.exec('ALTER TABLE solicitacoes_compras ADD COLUMN setor TEXT DEFAULT "Almoxarifado ServMil";');
+    db.exec(
+      'ALTER TABLE solicitacoes_compras ADD COLUMN setor TEXT DEFAULT "Almoxarifado ServMil";'
+    );
   } catch (e) {}
 
   try {
@@ -392,7 +404,7 @@ function initDatabase() {
       ['Johnny', 'Diretor', '5512991000003', 'johnny.diretoria@servmil.com.br', 1],
       ['Saulo', 'Diretor', '5512991000004', 'saulo.diretoria@servmil.com.br', 1],
       ['Murilo', 'Diretor', '5512991000005', 'murilo.diretoria@servmil.com.br', 1],
-      ['Daniele', 'Setor de Compras', '5512991000006', 'daniele.compras@servmil.com.br', 1]
+      ['Daniele', 'Setor de Compras', '5512991000006', 'daniele.compras@servmil.com.br', 1],
     ];
 
     for (const dest of destinatariosServMil) {
@@ -412,7 +424,7 @@ function initDatabase() {
       'Cabos e Fios',
       'Terminais e Conectores',
       'Insumos e Fitas',
-      'EPI e Segurança'
+      'EPI e Segurança',
     ];
     for (const nome of categoriasPadrao) insertCat.run(nome);
   }
@@ -427,24 +439,186 @@ function initDatabase() {
     `);
 
     const itensEletricaServMil = [
-      ['PAR-001', 'Parafuso Sextavado M8 x 25mm Inox 304', 'Parafusos e Fixadores', 18, 20, 'UN', 'Gaveteiro A - Gaveta 01', 1.85],
-      ['PAR-002', 'Parafuso Allen Cabeça Cilíndrica M6 x 20mm', 'Parafusos e Fixadores', 15, 20, 'UN', 'Gaveteiro A - Gaveta 02', 1.20],
-      ['PAR-003', 'Parafuso Auto Brocante Philips 4.2 x 38mm', 'Parafusos e Fixadores', 85, 20, 'UN', 'Gaveteiro A - Gaveta 03', 0.45],
-      ['PAR-004', 'Porca Sextavada M8 Zincada c/ Arruela de Pressão', 'Parafusos e Fixadores', 19, 20, 'UN', 'Gaveteiro A - Gaveta 04', 0.85],
-      ['SUP-001', 'Suporte Perfilado 38x38 para Eletrocalha', 'Suportes e Fixação', 12, 20, 'UN', 'Prateleira B - Nível 01', 14.50],
-      ['SUP-002', 'Grampo C 1/4" Reforçado para Viga Metálica', 'Suportes e Fixação', 14, 20, 'UN', 'Prateleira B - Nível 02', 8.20],
-      ['SUP-003', 'Abraçadeira D com Cunha 1" para Eletroduto', 'Suportes e Fixação', 45, 25, 'UN', 'Prateleira B - Nível 03', 3.10],
-      ['INF-001', 'Eletroduto Galvanizado a Fogo 1" Barra 3m', 'Infraestrutura', 16, 20, 'BR', 'Cavalete de Tubos - Setor E', 48.00],
-      ['INF-002', 'Curva 90º Eletroduto Galvanizado 1"', 'Infraestrutura', 9, 15, 'UN', 'Prateleira C - Caixa 02', 12.00],
-      ['INF-003', 'Eletrocalha Perfurada 50x50x3000mm com Tampa', 'Infraestrutura', 8, 10, 'BR', 'Cavalete de Eletrocalhas', 65.00],
-      ['DISJ-001', 'Disjuntor Bipolar 32A Curva C 5kA DIN', 'Disjuntores e Proteção', 7, 10, 'UN', 'Armário Painel - Prateleira 01', 34.00],
-      ['DISJ-002', 'Disjuntor Tripolar 63A Curva C 10kA Schneider', 'Disjuntores e Proteção', 4, 5, 'UN', 'Armário Painel - Prateleira 02', 110.00],
-      ['CAB-001', 'Cabo Flexível 2.5mm² 750V Verde (Terra)', 'Cabos e Fios', 120, 50, 'MT', 'Rolo E-01', 2.80],
-      ['CAB-002', 'Cabo Flexível 6.0mm² 750V Azul Claro (Neutro)', 'Cabos e Fios', 80, 50, 'MT', 'Rolo E-02', 6.40],
-      ['TER-001', 'Terminal Tubular Ilhós 16mm² Amarelo', 'Terminais e Conectores', 110, 30, 'UN', 'Gaveta Conectores - D01', 0.85],
-      ['TER-002', 'Conector de Emenda Rápida WAGO 221-413 (3 vias)', 'Terminais e Conectores', 16, 25, 'UN', 'Gaveta Conectores - D02', 4.20],
-      ['INS-001', 'Fita Isolante Alta Fusão 19mm x 20m 3M Scotch', 'Insumos e Fitas', 8, 10, 'RL', 'Prateleira Insumos - I01', 32.50],
-      ['EPI-001', 'Luva Isolante de Borracha Classe 0 (1000V) Tam 10', 'EPI e Segurança', 5, 4, 'PAR', 'Armário Segurança S-01', 180.00]
+      [
+        'PAR-001',
+        'Parafuso Sextavado M8 x 25mm Inox 304',
+        'Parafusos e Fixadores',
+        18,
+        20,
+        'UN',
+        'Gaveteiro A - Gaveta 01',
+        1.85,
+      ],
+      [
+        'PAR-002',
+        'Parafuso Allen Cabeça Cilíndrica M6 x 20mm',
+        'Parafusos e Fixadores',
+        15,
+        20,
+        'UN',
+        'Gaveteiro A - Gaveta 02',
+        1.2,
+      ],
+      [
+        'PAR-003',
+        'Parafuso Auto Brocante Philips 4.2 x 38mm',
+        'Parafusos e Fixadores',
+        85,
+        20,
+        'UN',
+        'Gaveteiro A - Gaveta 03',
+        0.45,
+      ],
+      [
+        'PAR-004',
+        'Porca Sextavada M8 Zincada c/ Arruela de Pressão',
+        'Parafusos e Fixadores',
+        19,
+        20,
+        'UN',
+        'Gaveteiro A - Gaveta 04',
+        0.85,
+      ],
+      [
+        'SUP-001',
+        'Suporte Perfilado 38x38 para Eletrocalha',
+        'Suportes e Fixação',
+        12,
+        20,
+        'UN',
+        'Prateleira B - Nível 01',
+        14.5,
+      ],
+      [
+        'SUP-002',
+        'Grampo C 1/4" Reforçado para Viga Metálica',
+        'Suportes e Fixação',
+        14,
+        20,
+        'UN',
+        'Prateleira B - Nível 02',
+        8.2,
+      ],
+      [
+        'SUP-003',
+        'Abraçadeira D com Cunha 1" para Eletroduto',
+        'Suportes e Fixação',
+        45,
+        25,
+        'UN',
+        'Prateleira B - Nível 03',
+        3.1,
+      ],
+      [
+        'INF-001',
+        'Eletroduto Galvanizado a Fogo 1" Barra 3m',
+        'Infraestrutura',
+        16,
+        20,
+        'BR',
+        'Cavalete de Tubos - Setor E',
+        48.0,
+      ],
+      [
+        'INF-002',
+        'Curva 90º Eletroduto Galvanizado 1"',
+        'Infraestrutura',
+        9,
+        15,
+        'UN',
+        'Prateleira C - Caixa 02',
+        12.0,
+      ],
+      [
+        'INF-003',
+        'Eletrocalha Perfurada 50x50x3000mm com Tampa',
+        'Infraestrutura',
+        8,
+        10,
+        'BR',
+        'Cavalete de Eletrocalhas',
+        65.0,
+      ],
+      [
+        'DISJ-001',
+        'Disjuntor Bipolar 32A Curva C 5kA DIN',
+        'Disjuntores e Proteção',
+        7,
+        10,
+        'UN',
+        'Armário Painel - Prateleira 01',
+        34.0,
+      ],
+      [
+        'DISJ-002',
+        'Disjuntor Tripolar 63A Curva C 10kA Schneider',
+        'Disjuntores e Proteção',
+        4,
+        5,
+        'UN',
+        'Armário Painel - Prateleira 02',
+        110.0,
+      ],
+      [
+        'CAB-001',
+        'Cabo Flexível 2.5mm² 750V Verde (Terra)',
+        'Cabos e Fios',
+        120,
+        50,
+        'MT',
+        'Rolo E-01',
+        2.8,
+      ],
+      [
+        'CAB-002',
+        'Cabo Flexível 6.0mm² 750V Azul Claro (Neutro)',
+        'Cabos e Fios',
+        80,
+        50,
+        'MT',
+        'Rolo E-02',
+        6.4,
+      ],
+      [
+        'TER-001',
+        'Terminal Tubular Ilhós 16mm² Amarelo',
+        'Terminais e Conectores',
+        110,
+        30,
+        'UN',
+        'Gaveta Conectores - D01',
+        0.85,
+      ],
+      [
+        'TER-002',
+        'Conector de Emenda Rápida WAGO 221-413 (3 vias)',
+        'Terminais e Conectores',
+        16,
+        25,
+        'UN',
+        'Gaveta Conectores - D02',
+        4.2,
+      ],
+      [
+        'INS-001',
+        'Fita Isolante Alta Fusão 19mm x 20m 3M Scotch',
+        'Insumos e Fitas',
+        8,
+        10,
+        'RL',
+        'Prateleira Insumos - I01',
+        32.5,
+      ],
+      [
+        'EPI-001',
+        'Luva Isolante de Borracha Classe 0 (1000V) Tam 10',
+        'EPI e Segurança',
+        5,
+        4,
+        'PAR',
+        'Armário Segurança S-01',
+        180.0,
+      ],
     ];
 
     for (const item of itensEletricaServMil) {
@@ -462,42 +636,114 @@ function initDatabase() {
     `);
 
     const hoje = new Date();
-    const dataAlerta1 = new Date(hoje.getTime() + 8 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // Vence em 8 dias
-    const dataAlerta2 = new Date(hoje.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // Vence em 14 dias
-    const dataVencido = new Date(hoje.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // Vencido
+    const dataAlerta1 = new Date(hoje.getTime() + 8 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0]; // Vence em 8 dias
+    const dataAlerta2 = new Date(hoje.getTime() + 14 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0]; // Vence em 14 dias
+    const dataVencido = new Date(hoje.getTime() - 4 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0]; // Vencido
     const dataOk = new Date(hoje.getTime() + 120 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // OK
 
-    insertEquip.run('PAT-EL-001', 'Multímetro Digital True RMS 1000V', 'Fluke', 'Fluke 179', 'FLK-983214', '2025-09-20', dataAlerta1, 'LabCal RBC', 'CAL-2025-901', 'Victor Hugo');
-    insertEquip.run('PAT-EL-002', 'Alicate Amperímetro Digital AC/DC 1000A', 'Minipa', 'ET-3200', 'MNP-45012', '2025-10-01', dataAlerta2, 'Instrulab', 'CAL-2025-442', 'Engenharia de Campo');
-    insertEquip.run('PAT-EL-003', 'Megômetro Digital 5kV', 'Megabras', 'MD-5060x', 'MB-77120', '2024-09-12', dataVencido, 'Aferitec RBC', 'CAL-2024-883', 'Manutenção Elétrica');
-    insertEquip.run('PAT-EL-004', 'Câmera Termográfica Infravermelha', 'FLIR', 'FLIR E4 WiFi', 'FLR-10293', '2026-03-10', dataOk, 'Flir Certified', 'CAL-2026-102', 'Victor Hugo');
+    insertEquip.run(
+      'PAT-EL-001',
+      'Multímetro Digital True RMS 1000V',
+      'Fluke',
+      'Fluke 179',
+      'FLK-983214',
+      '2025-09-20',
+      dataAlerta1,
+      'LabCal RBC',
+      'CAL-2025-901',
+      'Victor Hugo'
+    );
+    insertEquip.run(
+      'PAT-EL-002',
+      'Alicate Amperímetro Digital AC/DC 1000A',
+      'Minipa',
+      'ET-3200',
+      'MNP-45012',
+      '2025-10-01',
+      dataAlerta2,
+      'Instrulab',
+      'CAL-2025-442',
+      'Engenharia de Campo'
+    );
+    insertEquip.run(
+      'PAT-EL-003',
+      'Megômetro Digital 5kV',
+      'Megabras',
+      'MD-5060x',
+      'MB-77120',
+      '2024-09-12',
+      dataVencido,
+      'Aferitec RBC',
+      'CAL-2024-883',
+      'Manutenção Elétrica'
+    );
+    insertEquip.run(
+      'PAT-EL-004',
+      'Câmera Termográfica Infravermelha',
+      'FLIR',
+      'FLIR E4 WiFi',
+      'FLR-10293',
+      '2026-03-10',
+      dataOk,
+      'Flir Certified',
+      'CAL-2026-102',
+      'Victor Hugo'
+    );
   }
 
   // Seeding de Compras com feedback do comprador
   const countCompras = db.prepare('SELECT COUNT(*) as total FROM solicitacoes_compras').get();
   if (countCompras.total === 0) {
-    const item1 = db.prepare('SELECT id, nome, quantidade_atual FROM estoque_itens WHERE codigo_id = ?').get('PAR-001');
-    const item2 = db.prepare('SELECT id, nome, quantidade_atual FROM estoque_itens WHERE codigo_id = ?').get('SUP-001');
+    const item1 = db
+      .prepare('SELECT id, nome, quantidade_atual FROM estoque_itens WHERE codigo_id = ?')
+      .get('PAR-001');
+    const item2 = db
+      .prepare('SELECT id, nome, quantidade_atual FROM estoque_itens WHERE codigo_id = ?')
+      .get('SUP-001');
 
     if (item1) {
-      db.prepare(`
+      db.prepare(
+        `
         INSERT INTO solicitacoes_compras 
         (item_id, item_nome, quantidade_atual, quantidade_solicitada, urgencia, solicitante, setor, status, observacao, feedback_compras)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        item1.id, item1.nome, item1.quantidade_atual, 200, 'ALTA', 'Victor Hugo (Almoxarifado)', 'Almoxarifado ServMil', 'EM_COTACAO',
+      `
+      ).run(
+        item1.id,
+        item1.nome,
+        item1.quantidade_atual,
+        200,
+        'ALTA',
+        'Victor Hugo (Almoxarifado)',
+        'Almoxarifado ServMil',
+        'EM_COTACAO',
         'Estoque atingiu 18 un (crítico ≤ 20). Necessário para montagem de infraestrutura.',
         'Cotação com fornecedor habitual realizada. Aguardando liberação do Cleber.'
       );
     }
 
     if (item2) {
-      db.prepare(`
+      db.prepare(
+        `
         INSERT INTO solicitacoes_compras 
         (item_id, item_nome, quantidade_atual, quantidade_solicitada, urgencia, solicitante, setor, status, observacao, feedback_compras)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        item2.id, item2.nome, item2.quantidade_atual, 50, 'CRÍTICA', 'Victor Hugo (Almoxarifado)', 'Almoxarifado ServMil', 'PENDENTE',
+      `
+      ).run(
+        item2.id,
+        item2.nome,
+        item2.quantidade_atual,
+        50,
+        'CRÍTICA',
+        'Victor Hugo (Almoxarifado)',
+        'Almoxarifado ServMil',
+        'PENDENTE',
         'Faltam suportes para continuidade da obra da linha de produção.',
         'Pedido recebido em Compras por Daniele. Aguardando liberação do Johnny.'
       );
@@ -522,21 +768,33 @@ function migrarImagensChatParaBanco() {
       const refs = db.prepare('SELECT id FROM mensagens_chat WHERE imagem = ?').all(caminhoAntigo);
       if (refs.length === 0) continue; // ignorado/órfão
       let buf;
-      try { buf = fs.readFileSync(path.join(pasta, nome)); } catch (e) { continue; }
+      try {
+        buf = fs.readFileSync(path.join(pasta, nome));
+      } catch (e) {
+        continue;
+      }
       if (!buf || buf.length === 0) continue;
       const ext = (nome.split('.').pop() || '').toLowerCase();
-      const mime = ext === 'png' ? 'image/png'
-        : ext === 'webp' ? 'image/webp'
-        : ext === 'gif' ? 'image/gif'
-        : 'image/jpeg';
+      const mime =
+        ext === 'png'
+          ? 'image/png'
+          : ext === 'webp'
+            ? 'image/webp'
+            : ext === 'gif'
+              ? 'image/gif'
+              : 'image/jpeg';
       const id = crypto.randomBytes(24).toString('hex');
-      db.prepare('INSERT OR IGNORE INTO chat_anexos (id, mime, nome, tamanho, conteudo) VALUES (?, ?, ?, ?, ?)')
-        .run(id, mime, nome, buf.length, buf);
-      db.prepare('UPDATE mensagens_chat SET imagem = ? WHERE imagem = ?')
-        .run(`/api/chat/midia/${id}`, caminhoAntigo);
+      db.prepare(
+        'INSERT OR IGNORE INTO chat_anexos (id, mime, nome, tamanho, conteudo) VALUES (?, ?, ?, ?, ?)'
+      ).run(id, mime, nome, buf.length, buf);
+      db.prepare('UPDATE mensagens_chat SET imagem = ? WHERE imagem = ?').run(
+        `/api/chat/midia/${id}`,
+        caminhoAntigo
+      );
       migradas++;
     }
-    if (migradas > 0) console.log(`[Chat] ${migradas} imagem(ns) migrada(s) para o banco (agora vao no backup).`);
+    if (migradas > 0)
+      console.log(`[Chat] ${migradas} imagem(ns) migrada(s) para o banco (agora vao no backup).`);
   } catch (e) {
     console.error('[Chat] Falha ao migrar imagens para o banco:', e.message);
   }
@@ -553,5 +811,5 @@ module.exports = {
   DB_PATH,
   gerarHashSenha,
   validarSenha,
-  gerarTokenSessao
+  gerarTokenSessao,
 };

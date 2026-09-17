@@ -13,16 +13,16 @@
 
 ## 🎯 Visão Geral
 
-| Característica | Descrição |
-|----------------|-----------|
-| **Domínio** | Almoxarifado industrial / corporativo |
-| **Arquitetura** | Monolito modular Node.js + SQLite (WAL mode) |
-| **Autenticação** | Tokens 256-bit + scrypt + rate limiting + brute-force protection |
-| **Autorização** | RBAC: `ADMIN_MASTER`, `OPERADOR`, `COMPRAS`, `CONSULTA` |
-| **Backup** | Local (30 dias) + Google Drive (contínuo) + auto-recovery |
-| **Tempo real** | Chat 1-a-1 com imagens no banco + notificações (sininho) |
-| **Atualização** | Over-the-air via Google Drive (código + versão) |
-| **Observabilidade** | Auditoria completa (padrão bancário) + health checks |
+| Característica      | Descrição                                                        |
+| ------------------- | ---------------------------------------------------------------- |
+| **Domínio**         | Almoxarifado industrial / corporativo                            |
+| **Arquitetura**     | Monolito modular Node.js + SQLite (WAL mode)                     |
+| **Autenticação**    | Tokens 256-bit + scrypt + rate limiting + brute-force protection |
+| **Autorização**     | RBAC: `ADMIN_MASTER`, `OPERADOR`, `COMPRAS`, `CONSULTA`          |
+| **Backup**          | Local (30 dias) + Google Drive (contínuo) + auto-recovery        |
+| **Tempo real**      | Chat 1-a-1 com imagens no banco + notificações (sininho)         |
+| **Atualização**     | Over-the-air via Google Drive (código + versão)                  |
+| **Observabilidade** | Auditoria completa (padrão bancário) + health checks             |
 
 ---
 
@@ -68,6 +68,7 @@
 ## 🚀 Quick Start
 
 ### Pré-requisitos
+
 - **Node.js 20+** (LTS recomendado)
 - **npm 10+**
 - Conta Google Cloud (para Google Drive sync - opcional)
@@ -88,11 +89,13 @@ npm start
 ```
 
 ### Credenciais Padrão (Primeira Execução)
+
 ```
 Usuário: anderson
 Senha:   123456
 Role:    ADMIN_MASTER
 ```
+
 > ⚠️ **Altere a senha imediatamente após o primeiro login!**
 
 ---
@@ -100,6 +103,7 @@ Role:    ADMIN_MASTER
 ## ⚙️ Configuração
 
 ### Variáveis de Ambiente
+
 Crie um arquivo `.env` na raiz (opcional - valores padrão funcionam):
 
 ```env
@@ -121,6 +125,7 @@ BACKUP_INTERVAL_HOURS=24
 ```
 
 ### Google Drive Sync (Produção)
+
 1. Acesse [Google Cloud Console](https://console.cloud.google.com/)
 2. Crie projeto → APIs → **Google Drive API** → Ativar
 3. Credenciais → **OAuth 2.0 Client ID** (Application type: Web)
@@ -132,87 +137,95 @@ BACKUP_INTERVAL_HOURS=24
 ## 📚 API Reference
 
 ### Autenticação
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| `POST` | `/api/login` | Login (rate limited: 10/min) |
-| `GET`  | `/api/sessao` | Validar sessão ativa |
-| `POST` | `/api/logout` | Encerrar sessão |
+
+| Método | Endpoint      | Descrição                    |
+| ------ | ------------- | ---------------------------- |
+| `POST` | `/api/login`  | Login (rate limited: 10/min) |
+| `GET`  | `/api/sessao` | Validar sessão ativa         |
+| `POST` | `/api/logout` | Encerrar sessão              |
 
 ### Estoque (Almoxarifado)
-| Método | Endpoint | RBAC | Descrição |
-|--------|----------|------|-----------|
-| `GET` | `/api/estoque` | All | Listar itens (filtros: `busca`, `categoria`, `apenas_criticos`) |
-| `POST` | `/api/estoque` | OPERADOR+ | Cadastrar item |
-| `PUT` | `/api/estoque/:id` | OPERADOR+ | Atualizar item |
-| `DELETE` | `/api/estoque/:id` | ADMIN_MASTER | Excluir item |
-| `GET` | `/api/estoque/categorias` | All | Listar categorias |
-| `POST` | `/api/estoque/categorias` | ADMIN_MASTER | Criar categoria |
+
+| Método   | Endpoint                  | RBAC         | Descrição                                                       |
+| -------- | ------------------------- | ------------ | --------------------------------------------------------------- |
+| `GET`    | `/api/estoque`            | All          | Listar itens (filtros: `busca`, `categoria`, `apenas_criticos`) |
+| `POST`   | `/api/estoque`            | OPERADOR+    | Cadastrar item                                                  |
+| `PUT`    | `/api/estoque/:id`        | OPERADOR+    | Atualizar item                                                  |
+| `DELETE` | `/api/estoque/:id`        | ADMIN_MASTER | Excluir item                                                    |
+| `GET`    | `/api/estoque/categorias` | All          | Listar categorias                                               |
+| `POST`   | `/api/estoque/categorias` | ADMIN_MASTER | Criar categoria                                                 |
 
 ### Equipamentos / Metrologia
-| Método | Endpoint | RBAC | Descrição |
-|--------|----------|------|-----------|
-| `GET` | `/api/equipamentos` | All | Listar com status calibração |
-| `POST` | `/api/equipamentos` | OPERADOR+ | Cadastrar equipamento |
-| `PUT` | `/api/equipamentos/:id` | OPERADOR+ | Atualizar |
-| `DELETE` | `/api/equipamentos/:id` | ADMIN_MASTER | Excluir |
+
+| Método   | Endpoint                | RBAC         | Descrição                    |
+| -------- | ----------------------- | ------------ | ---------------------------- |
+| `GET`    | `/api/equipamentos`     | All          | Listar com status calibração |
+| `POST`   | `/api/equipamentos`     | OPERADOR+    | Cadastrar equipamento        |
+| `PUT`    | `/api/equipamentos/:id` | OPERADOR+    | Atualizar                    |
+| `DELETE` | `/api/equipamentos/:id` | ADMIN_MASTER | Excluir                      |
 
 ### Compras / Solicitações
-| Método | Endpoint | RBAC | Descrição |
-|--------|----------|------|-----------|
-| `GET` | `/api/compras` | All | Listar solicitações |
-| `POST` | `/api/compras` | OPERADOR+ | Nova solicitação |
-| `PATCH` | `/api/compras/:id/status` | COMPRAS+ | Atualizar status |
-| `PATCH` | `/api/compras/:id/feedback` | COMPRAS+ | Feedback do comprador |
+
+| Método  | Endpoint                    | RBAC      | Descrição             |
+| ------- | --------------------------- | --------- | --------------------- |
+| `GET`   | `/api/compras`              | All       | Listar solicitações   |
+| `POST`  | `/api/compras`              | OPERADOR+ | Nova solicitação      |
+| `PATCH` | `/api/compras/:id/status`   | COMPRAS+  | Atualizar status      |
+| `PATCH` | `/api/compras/:id/feedback` | COMPRAS+  | Feedback do comprador |
 
 ### Chat Privado
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| `GET` | `/api/chat/contatos` | Lista contatos + última msg + não lidas |
-| `GET` | `/api/chat/:id` | Histórico com usuário |
-| `POST` | `/api/chat/:id` | Enviar msg/imagem (12MB) |
-| `POST` | `/api/chat/:id/lidas` | Marcar como lidas |
-| `GET` | `/api/chat/naolidas/total` | Badge total não lidas |
+
+| Método | Endpoint                   | Descrição                               |
+| ------ | -------------------------- | --------------------------------------- |
+| `GET`  | `/api/chat/contatos`       | Lista contatos + última msg + não lidas |
+| `GET`  | `/api/chat/:id`            | Histórico com usuário                   |
+| `POST` | `/api/chat/:id`            | Enviar msg/imagem (12MB)                |
+| `POST` | `/api/chat/:id/lidas`      | Marcar como lidas                       |
+| `GET`  | `/api/chat/naolidas/total` | Badge total não lidas                   |
 
 ### Admin / Auditoria
-| Método | Endpoint | RBAC | Descrição |
-|--------|----------|------|-----------|
-| `GET` | `/api/usuarios` | ADMIN_MASTER | Listar usuários |
-| `POST` | `/api/usuarios` | ADMIN_MASTER | Criar usuário |
-| `PUT` | `/api/usuarios/:id` | ADMIN_MASTER | Editar usuário/role/senha |
-| `DELETE` | `/api/usuarios/:id` | ADMIN_MASTER | Excluir usuário |
-| `POST` | `/api/usuarios/:id/desbloquear` | ADMIN_MASTER | Desbloquear brute-force |
-| `GET` | `/api/auditoria` | ADMIN_MASTER | Logs segurança (200 últimos) |
-| `POST` | `/api/backup` | ADMIN_MASTER | Backup manual |
-| `GET` | `/api/backup/status` | ADMIN_MASTER | Status backups |
+
+| Método   | Endpoint                        | RBAC         | Descrição                    |
+| -------- | ------------------------------- | ------------ | ---------------------------- |
+| `GET`    | `/api/usuarios`                 | ADMIN_MASTER | Listar usuários              |
+| `POST`   | `/api/usuarios`                 | ADMIN_MASTER | Criar usuário                |
+| `PUT`    | `/api/usuarios/:id`             | ADMIN_MASTER | Editar usuário/role/senha    |
+| `DELETE` | `/api/usuarios/:id`             | ADMIN_MASTER | Excluir usuário              |
+| `POST`   | `/api/usuarios/:id/desbloquear` | ADMIN_MASTER | Desbloquear brute-force      |
+| `GET`    | `/api/auditoria`                | ADMIN_MASTER | Logs segurança (200 últimos) |
+| `POST`   | `/api/backup`                   | ADMIN_MASTER | Backup manual                |
+| `GET`    | `/api/backup/status`            | ADMIN_MASTER | Status backups               |
 
 ### Nuvem (Google Drive)
-| Método | Endpoint | RBAC | Descrição |
-|--------|----------|------|-----------|
-| `GET` | `/api/nuvem/status` | Public | Status conexão |
-| `GET` | `/api/nuvem/login` | Public | OAuth Google |
-| `POST` | `/api/nuvem/config` | ADMIN_MASTER | Salvar credenciais |
-| `POST` | `/api/nuvem/enviar` | ADMIN_MASTER | Enviar backup agora |
-| `POST` | `/api/nuvem/restaurar` | ADMIN_MASTER | Baixar da nuvem |
+
+| Método | Endpoint               | RBAC         | Descrição           |
+| ------ | ---------------------- | ------------ | ------------------- |
+| `GET`  | `/api/nuvem/status`    | Public       | Status conexão      |
+| `GET`  | `/api/nuvem/login`     | Public       | OAuth Google        |
+| `POST` | `/api/nuvem/config`    | ADMIN_MASTER | Salvar credenciais  |
+| `POST` | `/api/nuvem/enviar`    | ADMIN_MASTER | Enviar backup agora |
+| `POST` | `/api/nuvem/restaurar` | ADMIN_MASTER | Baixar da nuvem     |
 
 ### Atualização Over-the-Air
-| Método | Endpoint | RBAC | Descrição |
-|--------|----------|------|-----------|
-| `GET` | `/api/atualizacao/status` | ADMIN_MASTER | Verificar versão na nuvem |
+
+| Método | Endpoint                   | RBAC         | Descrição                  |
+| ------ | -------------------------- | ------------ | -------------------------- |
+| `GET`  | `/api/atualizacao/status`  | ADMIN_MASTER | Verificar versão na nuvem  |
 | `POST` | `/api/atualizacao/aplicar` | ADMIN_MASTER | Aplicar update + reiniciar |
 
 ---
 
 ## 🛡️ Segurança (Hardening)
 
-| Camada | Implementação |
-|--------|---------------|
-| **Senhas** | scrypt (N=16384, r=8, p=1) + salt 16 bytes + timingSafeEqual |
-| **Sessões** | Token 256-bit (crypto.randomBytes) + expiração configurável |
-| **Rate Limit** | Por IP + por rota (login: 10/min, API: 120/min) |
-| **Brute Force** | Bloqueio 15 min após 5 falhas + auditoria |
-| **Headers** | CSP estrito, HSTS, X-Frame-Options, Permissions-Policy |
-| **Auditoria** | Log imutável: login, RBAC changes, CRUD sensível, backup, nuvem |
-| **Recuperação** | Auto-restore local → nuvem → fresh DB (zero downtime) |
+| Camada          | Implementação                                                   |
+| --------------- | --------------------------------------------------------------- |
+| **Senhas**      | scrypt (N=16384, r=8, p=1) + salt 16 bytes + timingSafeEqual    |
+| **Sessões**     | Token 256-bit (crypto.randomBytes) + expiração configurável     |
+| **Rate Limit**  | Por IP + por rota (login: 10/min, API: 120/min)                 |
+| **Brute Force** | Bloqueio 15 min após 5 falhas + auditoria                       |
+| **Headers**     | CSP estrito, HSTS, X-Frame-Options, Permissions-Policy          |
+| **Auditoria**   | Log imutável: login, RBAC changes, CRUD sensível, backup, nuvem |
+| **Recuperação** | Auto-restore local → nuvem → fresh DB (zero downtime)           |
 
 ---
 
@@ -267,6 +280,7 @@ AlmoxarifadoProject/
 ## 🚢 Deploy Produção
 
 ### PM2 (Recomendado VPS)
+
 ```bash
 npm install -g pm2
 pm2 start server.js --name almoxarifado
@@ -275,6 +289,7 @@ pm2 save
 ```
 
 ### Docker
+
 ```dockerfile
 FROM node:20-alpine
 WORKDIR /app
@@ -291,6 +306,7 @@ docker run -d -p 3000:3000 -v ./data:/app/data almoxarifado
 ```
 
 ### Systemd (Linux)
+
 ```ini
 # /etc/systemd/system/almoxarifado.service
 [Unit]
@@ -320,6 +336,7 @@ WantedBy=multi-user.target
 5. Abra Pull Request
 
 ### Padrões de Commit (Conventional Commits)
+
 - `feat:` nova funcionalidade
 - `fix:` correção de bug
 - `docs:` documentação
@@ -338,6 +355,7 @@ MIT License - veja [LICENSE](LICENSE) para detalhes.
 ## 👨‍💻 Autor
 
 **Victor Hugo** — Engenheiro de Software
+
 - GitHub: [@VictorHugoEng](https://github.com/VictorHugoEng)
 - LinkedIn: [victorhugoeng](https://linkedin.com/in/victorhugoeng)
 
@@ -353,4 +371,4 @@ MIT License - veja [LICENSE](LICENSE) para detalhes.
 ---
 
 > **Construído com padrão enterprise para produção.**  
-> *Zero data loss. Zero downtime. Zero excuses.*
+> _Zero data loss. Zero downtime. Zero excuses._

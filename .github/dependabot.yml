@@ -1,56 +1,56 @@
 version: 2
 updates:
   # Dependências npm (produção + desenvolvimento)
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "America/Sao_Paulo"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'America/Sao_Paulo'
     open-pull-requests-limit: 10
     labels:
-      - "dependencies"
-      - "npm"
+      - 'dependencies'
+      - 'npm'
     commit-message:
-      prefix: "chore(deps)"
-      prefix-development: "chore(dev-deps)"
-      include: "scope"
+      prefix: 'chore(deps)'
+      prefix-development: 'chore(dev-deps)'
+      include: 'scope'
     reviewers:
-      - "VictorHugoEng"
+      - 'VictorHugoEng'
     assignees:
-      - "VictorHugoEng"
+      - 'VictorHugoEng'
     allow:
-      - dependency-type: "direct"
-      - dependency-type: "indirect"
+      - dependency-type: 'direct'
+      - dependency-type: 'indirect'
     ignore:
       # Ignora major updates do Express 5 (breaking changes)
-      - dependency-name: "express"
-        versions: ["5.x"]
+      - dependency-name: 'express'
+        versions: ['5.x']
     groups:
       dev-dependencies:
         patterns:
-          - "eslint*"
-          - "prettier*"
-          - "husky*"
+          - 'eslint*'
+          - 'prettier*'
+          - 'husky*'
         update-types:
-          - "minor"
-          - "patch"
+          - 'minor'
+          - 'patch'
 
   # GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "America/Sao_Paulo"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'America/Sao_Paulo'
     open-pull-requests-limit: 5
     labels:
-      - "dependencies"
-      - "github-actions"
+      - 'dependencies'
+      - 'github-actions'
     commit-message:
-      prefix: "chore(ci)"
-      include: "scope"
+      prefix: 'chore(ci)'
+      include: 'scope'
     reviewers:
-      - "VictorHugoEng"
+      - 'VictorHugoEng'

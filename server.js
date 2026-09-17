@@ -12,12 +12,12 @@ const PORT = process.env.PORT || 3000;
 // SISTEMA DE BACKUP AUTOMÁTICO (NUNCA PERDER DADOS)
 // ==========================================
 const PASTA_BACKUPS = path.join(__dirname, 'backups');
-const MAX_BACKUPS = 30;              // mantém 30 cópias = ~1 mês de retenção
+const MAX_BACKUPS = 30; // mantém 30 cópias = ~1 mês de retenção
 const INTERVALO_BACKUP_MS = 24 * 60 * 60 * 1000; // backup automático a cada 24h
 const BACKUP_LOG_TXT = path.join(__dirname, 'backups', 'historico_backups.txt');
-let ultimoBackup = null;             // { data, caminho, tamanho }
-let ultimoBackupLocalEm = 0;         // quando um backup local foi feito
-let timerBackupLocal = null;         // agenda backup local após alterações
+let ultimoBackup = null; // { data, caminho, tamanho }
+let ultimoBackupLocalEm = 0; // quando um backup local foi feito
+let timerBackupLocal = null; // agenda backup local após alterações
 const MIN_INTERVALO_BACKUP_LOCAL_MS = 5 * 60 * 1000; // no máx. 1 a cada 5 min
 
 function realizarBackup() {
@@ -38,21 +38,28 @@ function realizarBackup() {
     ultimoBackup = { data: agora.toISOString(), caminho: destino, tamanho };
 
     // Remove cópias antigas (mantém as MAX_BACKUPS mais recentes)
-    const arquivos = fs.readdirSync(PASTA_BACKUPS)
+    const arquivos = fs
+      .readdirSync(PASTA_BACKUPS)
       .filter(f => f.startsWith('voltstock_') && f.endsWith('.db'))
       .sort();
     while (arquivos.length > MAX_BACKUPS) {
       const antigo = arquivos.shift();
-      try { fs.unlinkSync(path.join(PASTA_BACKUPS, antigo)); } catch (e) {}
+      try {
+        fs.unlinkSync(path.join(PASTA_BACKUPS, antigo));
+      } catch (e) {}
     }
 
     // Registra no histórico de backups
     try {
-      fs.appendFileSync(BACKUP_LOG_TXT,
-        `[${agora.toLocaleString('pt-BR')}] BACKUP: voltstock_${stamp}.db (${(tamanho / 1024).toFixed(1)} KB)\n`);
+      fs.appendFileSync(
+        BACKUP_LOG_TXT,
+        `[${agora.toLocaleString('pt-BR')}] BACKUP: voltstock_${stamp}.db (${(tamanho / 1024).toFixed(1)} KB)\n`
+      );
     } catch (e) {}
 
-    console.log(`[Backup] Copia de segurança criada: voltstock_${stamp}.db (${(tamanho / 1024).toFixed(1)} KB)`);
+    console.log(
+      `[Backup] Copia de segurança criada: voltstock_${stamp}.db (${(tamanho / 1024).toFixed(1)} KB)`
+    );
     return ultimoBackup;
   } catch (e) {
     console.error('[Backup] Falha ao criar backup:', e.message);
@@ -98,18 +105,21 @@ app.use((req, res, next) => {
   res.setHeader('X-XSS-Protection', '0');
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  res.setHeader('Content-Security-Policy', [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src https://fonts.gstatic.com",
-    "img-src 'self' data: https:",
-    "connect-src 'self'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-    "object-src 'none'"
-  ].join('; '));
+  res.setHeader(
+    'Content-Security-Policy',
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      'font-src https://fonts.gstatic.com',
+      "img-src 'self' data: https:",
+      "connect-src 'self'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+      "object-src 'none'",
+    ].join('; ')
+  );
   next();
 });
 
@@ -138,7 +148,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 // quase instantaneamente e também gera cópia local.
 // Ficam de fora só rotas que não são dados de negócio ou que gerariam
 // envios em excesso (a nuvem em si, login/logout, chat e notificações).
-const ROTAS_SEM_SYNC = ['/api/nuvem', '/api/login', '/api/logout', '/api/chat', '/api/notificacoes'];
+const ROTAS_SEM_SYNC = [
+  '/api/nuvem',
+  '/api/login',
+  '/api/logout',
+  '/api/chat',
+  '/api/notificacoes',
+];
 app.use((req, res, next) => {
   if (req.path.startsWith('/api/') && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
     res.on('finish', () => {
@@ -155,8 +171,8 @@ app.use((req, res, next) => {
 // ==========================================
 // SEGURANÇA: CONSTANTES DE PROTEÇÃO EXTREMA
 // ==========================================
-const MAX_TENTATIVAS = 5;           // bloqueio após 5 erros
-const MINUTOS_BLOQUEIO = 15;        // bloqueado por 15 minutos
+const MAX_TENTATIVAS = 5; // bloqueio após 5 erros
+const MINUTOS_BLOQUEIO = 15; // bloqueado por 15 minutos
 const ROLES_VALIDAS = ['ADMIN_MASTER', 'OPERADOR', 'COMPRAS', 'CONSULTA'];
 
 function obterIp(req) {
@@ -204,7 +220,13 @@ function criarRateLimiter({ janelaMs = 60000, max = 100, nome = 'api', bloquearM
     rec.contador++;
     if (rec.contador > max) {
       if (bloquearMs > 0) rec.bloqueadoAte = agora + bloquearMs;
-      registrarLog('RATE_LIMIT', null, null, `IP ${obterIp(req)} excedeu limite ${nome} (${max}/janela)`, obterIp(req));
+      registrarLog(
+        'RATE_LIMIT',
+        null,
+        null,
+        `IP ${obterIp(req)} excedeu limite ${nome} (${max}/janela)`,
+        obterIp(req)
+      );
       return res.status(429).json({ erro: 'Muitas requisições. Tente novamente em instantes.' });
     }
 
@@ -220,12 +242,20 @@ function msgErroInterno(err) {
 }
 
 // Registro de eventos de segurança em trilha de auditoria
-function registrarLog(evento, usuarioId = null, usernameTentativa = null, detalhes = '', ip = null) {
+function registrarLog(
+  evento,
+  usuarioId = null,
+  usernameTentativa = null,
+  detalhes = '',
+  ip = null
+) {
   try {
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO logs_seguranca (usuario_id, username_tentativa, evento, ip, detalhes)
       VALUES (?, ?, ?, ?, ?)
-    `).run(usuarioId, usernameTentativa, evento, ip, detalhes);
+    `
+    ).run(usuarioId, usernameTentativa, evento, ip, detalhes);
   } catch (e) {
     console.error('[Auditoria] Falha ao registrar evento:', e.message);
   }
@@ -250,9 +280,13 @@ function exigirAutenticacao(req, res, next) {
     return res.status(401).json({ erro: 'Sessão expirada. Faça login novamente.' });
   }
 
-  const usuario = db.prepare(`
+  const usuario = db
+    .prepare(
+      `
     SELECT id, username, nome_completo, cargo, role, ativo FROM usuarios WHERE id = ?
-  `).get(sessao.usuario_id);
+  `
+    )
+    .get(sessao.usuario_id);
 
   if (!usuario || usuario.ativo !== 1) {
     return res.status(401).json({ erro: 'Conta desativada ou inexistente.' });
@@ -267,7 +301,13 @@ function exigirAutenticacao(req, res, next) {
 // Middleware: restringe rotas exclusivas do Administrador Master
 function exigirAdmin(req, res, next) {
   if (!req.usuario || req.usuario.role !== 'ADMIN_MASTER') {
-    registrarLog('ACESSO_NEGADO', req.usuario?.id, req.usuario?.username, 'Tentativa de acessar rota administrativa sem permissão', req.ip);
+    registrarLog(
+      'ACESSO_NEGADO',
+      req.usuario?.id,
+      req.usuario?.username,
+      'Tentativa de acessar rota administrativa sem permissão',
+      req.ip
+    );
     return res.status(403).json({ erro: 'Acesso restrito ao Administrador Master.' });
   }
   next();
@@ -278,88 +318,133 @@ function exigirAdmin(req, res, next) {
 // ==========================================
 
 // Login com proteção contra força bruta
-app.post('/api/login', criarRateLimiter({ nome: 'login', max: 10, bloquearMs: 15 * 60000 }), (req, res) => {
-  try {
-    const { username, senha, lembrar_me } = req.body;
-    const ip = obterIp(req);
+app.post(
+  '/api/login',
+  criarRateLimiter({ nome: 'login', max: 10, bloquearMs: 15 * 60000 }),
+  (req, res) => {
+    try {
+      const { username, senha, lembrar_me } = req.body;
+      const ip = obterIp(req);
 
-    if (!username || !senha) {
-      return res.status(400).json({ erro: 'Informe usuário e senha.' });
-    }
-
-    const usuario = db.prepare('SELECT * FROM usuarios WHERE username = ?').get(username.trim());
-    if (!usuario) {
-      registrarLog('LOGIN_FALHA', null, username.trim(), 'Usuário não localizado', ip);
-      return res.status(401).json({ erro: 'Credenciais inválidas.' });
-    }
-
-    // Conta bloqueada temporariamente
-    if (usuario.bloqueado_ate && Date.parse(usuario.bloqueado_ate) > Date.now()) {
-      const minutosRestantes = Math.ceil((Date.parse(usuario.bloqueado_ate) - Date.now()) / 60000);
-      registrarLog('LOGIN_BLOQUEADO', usuario.id, usuario.username, `Bloqueado por ${MINUTOS_BLOQUEIO} min`, ip);
-      return res.status(423).json({
-        erro: `Conta bloqueada por segurança. Tente novamente em ${minutosRestantes} min.`
-      });
-    }
-
-    const senhaValida = validarSenha(senha, usuario.password_hash, usuario.salt);
-
-    if (!senhaValida) {
-      const novasTentativas = usuario.tentativas_falhas + 1;
-      if (novasTentativas >= MAX_TENTATIVAS) {
-        const bloqueadoAte = new Date(Date.now() + MINUTOS_BLOQUEIO * 60000).toISOString();
-        db.prepare('UPDATE usuarios SET tentativas_falhas = ?, bloqueado_ate = ? WHERE id = ?')
-          .run(novasTentativas, bloqueadoAte, usuario.id);
-        registrarLog('BLOQUEIO_BRUTE_FORCE', usuario.id, usuario.username,
-          `Conta bloqueada após ${novasTentativas} tentativas falhas (${MINUTOS_BLOQUEIO} min)`, ip);
-        return res.status(423).json({ erro: `Conta bloqueada após ${novasTentativas} tentativas falhas. Aguarde ${MINUTOS_BLOQUEIO} minutos.` });
+      if (!username || !senha) {
+        return res.status(400).json({ erro: 'Informe usuário e senha.' });
       }
-      db.prepare('UPDATE usuarios SET tentativas_falhas = ? WHERE id = ?').run(novasTentativas, usuario.id);
-      registrarLog('LOGIN_FALHA', usuario.id, usuario.username, `Tentativa ${novasTentativas}/${MAX_TENTATIVAS}`, ip);
-      return res.status(401).json({
-        erro: 'Credenciais inválidas.',
-        tentativas: novasTentativas,
-        max: MAX_TENTATIVAS
-      });
-    }
 
-    if (usuario.ativo !== 1) {
-      registrarLog('LOGIN_DESATIVADO', usuario.id, usuario.username, 'Conta desativada', ip);
-      return res.status(403).json({ erro: 'Conta desativada. Acione o administrador do sistema.' });
-    }
+      const usuario = db.prepare('SELECT * FROM usuarios WHERE username = ?').get(username.trim());
+      if (!usuario) {
+        registrarLog('LOGIN_FALHA', null, username.trim(), 'Usuário não localizado', ip);
+        return res.status(401).json({ erro: 'Credenciais inválidas.' });
+      }
 
-    // Sucesso: emite sessão criptograficamente forte (256 bits)
-    const horasSessao = lembrar_me ? 24 * 30 : 12;
-    const expiraEm = new Date(Date.now() + horasSessao * 3600000).toISOString();
-    const token = gerarTokenSessao();
+      // Conta bloqueada temporariamente
+      if (usuario.bloqueado_ate && Date.parse(usuario.bloqueado_ate) > Date.now()) {
+        const minutosRestantes = Math.ceil(
+          (Date.parse(usuario.bloqueado_ate) - Date.now()) / 60000
+        );
+        registrarLog(
+          'LOGIN_BLOQUEADO',
+          usuario.id,
+          usuario.username,
+          `Bloqueado por ${MINUTOS_BLOQUEIO} min`,
+          ip
+        );
+        return res.status(423).json({
+          erro: `Conta bloqueada por segurança. Tente novamente em ${minutosRestantes} min.`,
+        });
+      }
 
-    db.prepare(`
+      const senhaValida = validarSenha(senha, usuario.password_hash, usuario.salt);
+
+      if (!senhaValida) {
+        const novasTentativas = usuario.tentativas_falhas + 1;
+        if (novasTentativas >= MAX_TENTATIVAS) {
+          const bloqueadoAte = new Date(Date.now() + MINUTOS_BLOQUEIO * 60000).toISOString();
+          db.prepare(
+            'UPDATE usuarios SET tentativas_falhas = ?, bloqueado_ate = ? WHERE id = ?'
+          ).run(novasTentativas, bloqueadoAte, usuario.id);
+          registrarLog(
+            'BLOQUEIO_BRUTE_FORCE',
+            usuario.id,
+            usuario.username,
+            `Conta bloqueada após ${novasTentativas} tentativas falhas (${MINUTOS_BLOQUEIO} min)`,
+            ip
+          );
+          return res
+            .status(423)
+            .json({
+              erro: `Conta bloqueada após ${novasTentativas} tentativas falhas. Aguarde ${MINUTOS_BLOQUEIO} minutos.`,
+            });
+        }
+        db.prepare('UPDATE usuarios SET tentativas_falhas = ? WHERE id = ?').run(
+          novasTentativas,
+          usuario.id
+        );
+        registrarLog(
+          'LOGIN_FALHA',
+          usuario.id,
+          usuario.username,
+          `Tentativa ${novasTentativas}/${MAX_TENTATIVAS}`,
+          ip
+        );
+        return res.status(401).json({
+          erro: 'Credenciais inválidas.',
+          tentativas: novasTentativas,
+          max: MAX_TENTATIVAS,
+        });
+      }
+
+      if (usuario.ativo !== 1) {
+        registrarLog('LOGIN_DESATIVADO', usuario.id, usuario.username, 'Conta desativada', ip);
+        return res
+          .status(403)
+          .json({ erro: 'Conta desativada. Acione o administrador do sistema.' });
+      }
+
+      // Sucesso: emite sessão criptograficamente forte (256 bits)
+      const horasSessao = lembrar_me ? 24 * 30 : 12;
+      const expiraEm = new Date(Date.now() + horasSessao * 3600000).toISOString();
+      const token = gerarTokenSessao();
+
+      db.prepare(
+        `
       INSERT INTO sessoes_ativas (token, usuario_id, lembrar_me, expira_em, ip_origem)
       VALUES (?, ?, ?, ?, ?)
-    `).run(token, usuario.id, lembrar_me ? 1 : 0, expiraEm, ip);
+    `
+      ).run(token, usuario.id, lembrar_me ? 1 : 0, expiraEm, ip);
 
-    db.prepare(`
+      db.prepare(
+        `
       UPDATE usuarios SET tentativas_falhas = 0, bloqueado_ate = NULL, ultimo_login = CURRENT_TIMESTAMP WHERE id = ?
-    `).run(usuario.id);
+    `
+      ).run(usuario.id);
 
-    registrarLog('LOGIN_SUCESSO', usuario.id, usuario.username, `Autenticação OK (sessão ${horasSessao}h)`, ip);
+      registrarLog(
+        'LOGIN_SUCESSO',
+        usuario.id,
+        usuario.username,
+        `Autenticação OK (sessão ${horasSessao}h)`,
+        ip
+      );
 
-    res.json({
-      token,
-      expira_em: expiraEm,
-      lembrar_me: !!lembrar_me,
-      usuario: {
-        id: usuario.id,
-        username: usuario.username,
-        nome: usuario.nome_completo,
-        cargo: usuario.cargo,
-        role: usuario.role
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ erro: 'Falha interna na autenticação', detalhes: msgErroInterno(error) });
+      res.json({
+        token,
+        expira_em: expiraEm,
+        lembrar_me: !!lembrar_me,
+        usuario: {
+          id: usuario.id,
+          username: usuario.username,
+          nome: usuario.nome_completo,
+          cargo: usuario.cargo,
+          role: usuario.role,
+        },
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ erro: 'Falha interna na autenticação', detalhes: msgErroInterno(error) });
+    }
   }
-});
+);
 
 // Validação de sessão ativa (usada na carga da página / guard)
 app.get('/api/sessao', (req, res) => {
@@ -367,11 +452,16 @@ app.get('/api/sessao', (req, res) => {
   if (!token) return res.status(401).json({ erro: 'Não autenticado' });
 
   const sessao = db.prepare('SELECT * FROM sessoes_ativas WHERE token = ?').get(token);
-  if (!sessao || Date.parse(sessao.expira_em) < Date.now()) return res.status(401).json({ erro: 'Sessão inválida ou expirada' });
+  if (!sessao || Date.parse(sessao.expira_em) < Date.now())
+    return res.status(401).json({ erro: 'Sessão inválida ou expirada' });
 
-  const usuario = db.prepare(`
+  const usuario = db
+    .prepare(
+      `
     SELECT id, username, nome_completo, cargo, role, ativo FROM usuarios WHERE id = ?
-  `).get(sessao.usuario_id);
+  `
+    )
+    .get(sessao.usuario_id);
 
   if (!usuario || usuario.ativo !== 1) return res.status(401).json({ erro: 'Conta desativada' });
 
@@ -381,7 +471,13 @@ app.get('/api/sessao', (req, res) => {
 // Encerramento seguro da sessão
 app.post('/api/logout', exigirAutenticacao, (req, res) => {
   try {
-    registrarLog('LOGOUT', req.usuario.id, req.usuario.username, 'Sessão encerrada manualmente', obterIp(req));
+    registrarLog(
+      'LOGOUT',
+      req.usuario.id,
+      req.usuario.username,
+      'Sessão encerrada manualmente',
+      obterIp(req)
+    );
     db.prepare('DELETE FROM sessoes_ativas WHERE token = ?').run(req.sessaoToken);
     res.json({ mensagem: 'Sessão encerrada com segurança.' });
   } catch (error) {
@@ -395,7 +491,7 @@ function enriquecerItemEstoque(item) {
   return {
     ...item,
     status_alerta: isCritico ? 'CRITICO' : 'NORMAL',
-    deficit: isCritico ? Math.max(0, item.quantidade_minima - item.quantidade_atual) : 0
+    deficit: isCritico ? Math.max(0, item.quantidade_minima - item.quantidade_atual) : 0,
   };
 }
 
@@ -403,7 +499,7 @@ function enriquecerItemEstoque(item) {
 function enriquecerEquipamento(equip) {
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
-  
+
   const dataValidade = new Date(equip.data_validade_calibracao + 'T00:00:00');
   const diffMs = dataValidade.getTime() - hoje.getTime();
   const diasRestantes = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
@@ -418,7 +514,7 @@ function enriquecerEquipamento(equip) {
   return {
     ...equip,
     dias_restantes: diasRestantes,
-    status_calibracao: status
+    status_calibracao: status,
   };
 }
 
@@ -428,13 +524,13 @@ function enriquecerEquipamento(equip) {
 // ==========================================
 const ROTAS_PUBLICAS_API = [
   '/api/login',
-  '/api/nuvem/status',        // tela de login consulta o estado da nuvem
-  '/api/nuvem/login',         // início do fluxo OAuth do Google
-  '/api/nuvem/oauth2/callback' // retorno do Google após autorização
+  '/api/nuvem/status', // tela de login consulta o estado da nuvem
+  '/api/nuvem/login', // início do fluxo OAuth do Google
+  '/api/nuvem/oauth2/callback', // retorno do Google após autorização
 ];
 // Rotas com id secreto (a tag <img> do navegador não envia o token de login)
 const ROTAS_PUBLICAS_PREFIXO = [
-  '/api/chat/midia/'          // fotos do chat (id aleatório e inacessível)
+  '/api/chat/midia/', // fotos do chat (id aleatório e inacessível)
 ];
 app.use('/api', (req, res, next) => {
   const caminho = req.originalUrl.split('?')[0];
@@ -451,13 +547,18 @@ app.use('/api', criarRateLimiter({ nome: 'api', max: 120 }));
 // Listar todos os usuários do sistema
 app.get('/api/usuarios', exigirAdmin, (req, res) => {
   try {
-    const usuarios = db.prepare(`
+    const usuarios = db
+      .prepare(
+        `
       SELECT id, username, nome_completo, cargo, role, ativo, tentativas_falhas, bloqueado_ate, ultimo_login, criado_em
       FROM usuarios ORDER BY id ASC
-    `).all().map(u => ({
-      ...u,
-      bloqueado: !!(u.bloqueado_ate && Date.parse(u.bloqueado_ate) > Date.now())
-    }));
+    `
+      )
+      .all()
+      .map(u => ({
+        ...u,
+        bloqueado: !!(u.bloqueado_ate && Date.parse(u.bloqueado_ate) > Date.now()),
+      }));
     res.json(usuarios);
   } catch (error) {
     res.status(500).json({ erro: 'Falha ao listar usuários', detalhes: msgErroInterno(error) });
@@ -477,15 +578,26 @@ app.post('/api/usuarios', exigirAdmin, (req, res) => {
     const roleFinal = ROLES_VALIDAS.includes(role) ? role : 'OPERADOR';
 
     const { salt, hash } = gerarHashSenha(senha);
-    const result = db.prepare(`
+    const result = db
+      .prepare(
+        `
       INSERT INTO usuarios (username, password_hash, salt, nome_completo, cargo, role, ativo)
       VALUES (?, ?, ?, ?, ?, ?, 1)
-    `).run(username.trim(), hash, salt, nome_completo.trim(), cargo || 'Operador', roleFinal);
+    `
+      )
+      .run(username.trim(), hash, salt, nome_completo.trim(), cargo || 'Operador', roleFinal);
 
-    registrarLog('CRIACAO_USUARIO', req.usuario.id, req.usuario.username,
-      `Criou usuário "${username.trim()}" com role ${roleFinal}`, obterIp(req));
+    registrarLog(
+      'CRIACAO_USUARIO',
+      req.usuario.id,
+      req.usuario.username,
+      `Criou usuário "${username.trim()}" com role ${roleFinal}`,
+      obterIp(req)
+    );
 
-    res.status(201).json({ id: result.lastInsertRowid, username: username.trim(), role: roleFinal });
+    res
+      .status(201)
+      .json({ id: result.lastInsertRowid, username: username.trim(), role: roleFinal });
   } catch (error) {
     if (error.message.includes('UNIQUE constraint failed')) {
       return res.status(409).json({ erro: 'Nome de usuário já existe no sistema' });
@@ -510,30 +622,47 @@ app.put('/api/usuarios/:id', exigirAdmin, (req, res) => {
         return res.status(400).json({ erro: 'Senha fraca: mínimo de 6 caracteres' });
       }
       const { salt, hash } = gerarHashSenha(nova_senha);
-      db.prepare(`
+      db.prepare(
+        `
         UPDATE usuarios SET nome_completo = ?, cargo = ?, role = ?, ativo = ?, password_hash = ?, salt = ?, tentativas_falhas = 0, bloqueado_ate = NULL WHERE id = ?
-      `).run(
+      `
+      ).run(
         nome_completo || alvo.nome_completo,
         cargo || alvo.cargo,
         roleFinal,
-        ativo === undefined ? alvo.ativo : (ativo ? 1 : 0),
-        hash, salt, id
+        ativo === undefined ? alvo.ativo : ativo ? 1 : 0,
+        hash,
+        salt,
+        id
       );
-      registrarLog('RESET_SENHA', req.usuario.id, req.usuario.username, `Redefiniu senha de "${alvo.username}"`, obterIp(req));
+      registrarLog(
+        'RESET_SENHA',
+        req.usuario.id,
+        req.usuario.username,
+        `Redefiniu senha de "${alvo.username}"`,
+        obterIp(req)
+      );
     } else {
-      db.prepare(`
+      db.prepare(
+        `
         UPDATE usuarios SET nome_completo = ?, cargo = ?, role = ?, ativo = ? WHERE id = ?
-      `).run(
+      `
+      ).run(
         nome_completo || alvo.nome_completo,
         cargo || alvo.cargo,
         roleFinal,
-        ativo === undefined ? alvo.ativo : (ativo ? 1 : 0),
+        ativo === undefined ? alvo.ativo : ativo ? 1 : 0,
         id
       );
     }
 
-    registrarLog('EDICAO_USUARIO', req.usuario.id, req.usuario.username,
-      `Editou "${alvo.username}" (role ${roleFinal}, ativo ${ativo === undefined ? alvo.ativo : (ativo ? 1 : 0)})`, obterIp(req));
+    registrarLog(
+      'EDICAO_USUARIO',
+      req.usuario.id,
+      req.usuario.username,
+      `Editou "${alvo.username}" (role ${roleFinal}, ativo ${ativo === undefined ? alvo.ativo : ativo ? 1 : 0})`,
+      obterIp(req)
+    );
 
     res.json({ mensagem: 'Usuário atualizado com sucesso.' });
   } catch (error) {
@@ -548,8 +677,16 @@ app.post('/api/usuarios/:id/desbloquear', exigirAdmin, (req, res) => {
     const alvo = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(id);
     if (!alvo) return res.status(404).json({ erro: 'Usuário não localizado' });
 
-    db.prepare('UPDATE usuarios SET tentativas_falhas = 0, bloqueado_ate = NULL WHERE id = ?').run(id);
-    registrarLog('DESBLOQUEIO_MANUAL', req.usuario.id, req.usuario.username, `Desbloqueou conta "${alvo.username}"`, obterIp(req));
+    db.prepare('UPDATE usuarios SET tentativas_falhas = 0, bloqueado_ate = NULL WHERE id = ?').run(
+      id
+    );
+    registrarLog(
+      'DESBLOQUEIO_MANUAL',
+      req.usuario.id,
+      req.usuario.username,
+      `Desbloqueou conta "${alvo.username}"`,
+      obterIp(req)
+    );
     res.json({ mensagem: `Conta de "${alvo.username}" desbloqueada.` });
   } catch (error) {
     res.status(500).json({ erro: 'Erro ao desbloquear usuário', detalhes: msgErroInterno(error) });
@@ -568,15 +705,25 @@ app.delete('/api/usuarios/:id', exigirAdmin, (req, res) => {
     if (!alvo) return res.status(404).json({ erro: 'Usuário não localizado' });
 
     if (alvo.role === 'ADMIN_MASTER') {
-      const countAdmins = db.prepare("SELECT COUNT(*) as total FROM usuarios WHERE role = 'ADMIN_MASTER' AND ativo = 1").get().total;
+      const countAdmins = db
+        .prepare("SELECT COUNT(*) as total FROM usuarios WHERE role = 'ADMIN_MASTER' AND ativo = 1")
+        .get().total;
       if (countAdmins <= 1) {
-        return res.status(400).json({ erro: 'Não é possível excluir o último administrador do sistema.' });
+        return res
+          .status(400)
+          .json({ erro: 'Não é possível excluir o último administrador do sistema.' });
       }
     }
 
     db.prepare('DELETE FROM sessoes_ativas WHERE usuario_id = ?').run(id);
     db.prepare('DELETE FROM usuarios WHERE id = ?').run(id);
-    registrarLog('EXCLUSAO_USUARIO', req.usuario.id, req.usuario.username, `Excluiu usuário "${alvo.username}"`, obterIp(req));
+    registrarLog(
+      'EXCLUSAO_USUARIO',
+      req.usuario.id,
+      req.usuario.username,
+      `Excluiu usuário "${alvo.username}"`,
+      obterIp(req)
+    );
     res.json({ mensagem: 'Usuário excluído com segurança.' });
   } catch (error) {
     res.status(500).json({ erro: 'Erro ao excluir usuário', detalhes: msgErroInterno(error) });
@@ -586,13 +733,17 @@ app.delete('/api/usuarios/:id', exigirAdmin, (req, res) => {
 // Trilha de auditoria / logs de segurança
 app.get('/api/auditoria', exigirAdmin, (req, res) => {
   try {
-    const logs = db.prepare(`
+    const logs = db
+      .prepare(
+        `
       SELECT l.id, l.username_tentativa, l.evento, l.ip, l.detalhes, l.data_hora,
              u.nome_completo AS nome_registrado
       FROM logs_seguranca l
       LEFT JOIN usuarios u ON u.id = l.usuario_id
       ORDER BY l.id DESC LIMIT 200
-    `).all();
+    `
+      )
+      .all();
     res.json(logs);
   } catch (error) {
     res.status(500).json({ erro: 'Falha ao carregar auditoria', detalhes: msgErroInterno(error) });
@@ -603,15 +754,21 @@ app.get('/api/auditoria', exigirAdmin, (req, res) => {
 app.post('/api/backup', exigirAdmin, (req, res) => {
   const backup = realizarBackup();
   if (!backup) return res.status(500).json({ erro: 'Falha ao gerar backup.' });
-  registrarLog('BACKUP_DB', req.usuario.id, req.usuario.username,
-    `Gerou backup manual do banco (voltstock_${path.basename(backup.caminho)}, ${(backup.tamanho / 1024).toFixed(1)} KB)`, obterIp(req));
+  registrarLog(
+    'BACKUP_DB',
+    req.usuario.id,
+    req.usuario.username,
+    `Gerou backup manual do banco (voltstock_${path.basename(backup.caminho)}, ${(backup.tamanho / 1024).toFixed(1)} KB)`,
+    obterIp(req)
+  );
   res.json({ mensagem: 'Backup gerado com sucesso!', backup });
 });
 
 app.get('/api/backup/status', exigirAdmin, (req, res) => {
   try {
     fs.mkdirSync(PASTA_BACKUPS, { recursive: true });
-    const arquivos = fs.readdirSync(PASTA_BACKUPS)
+    const arquivos = fs
+      .readdirSync(PASTA_BACKUPS)
       .filter(f => f.startsWith('voltstock_') && f.endsWith('.db'))
       .sort()
       .reverse()
@@ -654,7 +811,7 @@ app.get('/api/nuvem/oauth2/callback', async (req, res) => {
     cfg.tokens = {
       access_token: dados.access_token,
       refresh_token: dados.refresh_token,
-      expiry_date: Date.now() + (dados.expires_in || 3600) * 1000
+      expiry_date: Date.now() + (dados.expires_in || 3600) * 1000,
     };
     cfg.conta = (await nuvem.buscarEmailConta(dados.access_token)) || undefined;
     nuvem.salvarConfig(cfg);
@@ -677,8 +834,13 @@ app.post('/api/nuvem/config', exigirAdmin, (req, res) => {
       return res.status(400).json({ erro: 'Informe o Client ID e o Client Secret do Google.' });
     }
     nuvem.salvarCredenciais(clientId, clientSecret);
-    registrarLog('NUVEM_CONFIG', req.usuario.id, req.usuario.username,
-      'Configurou credenciais do Google Drive', obterIp(req));
+    registrarLog(
+      'NUVEM_CONFIG',
+      req.usuario.id,
+      req.usuario.username,
+      'Configurou credenciais do Google Drive',
+      obterIp(req)
+    );
     res.json({ mensagem: 'Credenciais salvas! Agora clique em Conectar.' });
   } catch (error) {
     res.status(500).json({ erro: 'Erro ao salvar configuração', detalhes: msgErroInterno(error) });
@@ -689,8 +851,13 @@ app.post('/api/nuvem/config', exigirAdmin, (req, res) => {
 app.post('/api/nuvem/desconectar', exigirAdmin, (req, res) => {
   try {
     nuvem.desconectar();
-    registrarLog('NUVEM_DESCONEXAO', req.usuario.id, req.usuario.username,
-      'Desconectou a conta Google', obterIp(req));
+    registrarLog(
+      'NUVEM_DESCONEXAO',
+      req.usuario.id,
+      req.usuario.username,
+      'Desconectou a conta Google',
+      obterIp(req)
+    );
     res.json({ mensagem: 'Nuvem desconectada.' });
   } catch (error) {
     res.status(500).json({ erro: 'Erro ao desconectar', detalhes: msgErroInterno(error) });
@@ -702,9 +869,16 @@ app.post('/api/nuvem/enviar', exigirAdmin, async (req, res) => {
   try {
     const resultado = await nuvem.enviarBackupNuvem();
     if (!resultado.ok) return res.status(400).json({ erro: resultado.erro });
-    registrarLog('NUVEM_ENVIO', req.usuario.id, req.usuario.username,
-      'Enviou backup ao Google Drive manualmente', obterIp(req));
-    res.json({ mensagem: resultado.atualizado ? 'Backup enviado à nuvem!' : 'Nuvem já está atualizada.' });
+    registrarLog(
+      'NUVEM_ENVIO',
+      req.usuario.id,
+      req.usuario.username,
+      'Enviou backup ao Google Drive manualmente',
+      obterIp(req)
+    );
+    res.json({
+      mensagem: resultado.atualizado ? 'Backup enviado à nuvem!' : 'Nuvem já está atualizada.',
+    });
   } catch (error) {
     res.status(500).json({ erro: 'Falha ao enviar', detalhes: msgErroInterno(error) });
   }
@@ -715,9 +889,17 @@ app.post('/api/nuvem/restaurar', exigirAdmin, async (req, res) => {
   try {
     const resultado = await nuvem.baixarBackupNuvem();
     if (!resultado.ok) return res.status(400).json({ erro: resultado.erro });
-    registrarLog('NUVEM_DOWNLOAD', req.usuario.id, req.usuario.username,
-      `Baixou backup da nuvem: ${path.basename(resultado.caminho)}`, obterIp(req));
-    res.json({ mensagem: 'Backup baixado da nuvem! Para aplicá-lo, reinicie o servidor.', caminho: resultado.caminho });
+    registrarLog(
+      'NUVEM_DOWNLOAD',
+      req.usuario.id,
+      req.usuario.username,
+      `Baixou backup da nuvem: ${path.basename(resultado.caminho)}`,
+      obterIp(req)
+    );
+    res.json({
+      mensagem: 'Backup baixado da nuvem! Para aplicá-lo, reinicie o servidor.',
+      caminho: resultado.caminho,
+    });
   } catch (error) {
     res.status(500).json({ erro: 'Falha ao baixar', detalhes: msgErroInterno(error) });
   }
@@ -726,10 +908,10 @@ app.post('/api/nuvem/restaurar', exigirAdmin, async (req, res) => {
 // Ao ligar o servidor, sincroniza com a nuvem (baixa a última versão se houver)
 setTimeout(() => {
   if (nuvem.temCliente() && nuvem.temTokens()) {
-    nuvem.enviarBackupNuvem().then((r) => {
+    nuvem.enviarBackupNuvem().then(r => {
       if (!r.ok && r.erro) console.log(`[Nuvem] Sincronização inicial: ${r.erro}`);
     });
-    nuvem.baixarBackupNuvem().then((r) => {
+    nuvem.baixarBackupNuvem().then(r => {
       if (r.ok) console.log(`[Nuvem] Versão mais recente da nuvem salva em: ${r.caminho}`);
     });
   }
@@ -738,9 +920,12 @@ setTimeout(() => {
 // Rede de segurança: a cada 3 min garante que a nuvem está atualizada.
 // O envio compara o hash do banco, então NADA é enviado se não mudou (é barato),
 // mas se um envio falhou (internet caiu, etc.) ele se recupera sozinho.
-setInterval(() => {
-  if (nuvem.temCliente() && nuvem.temTokens()) nuvem.sincronizarAgora();
-}, 3 * 60 * 1000);
+setInterval(
+  () => {
+    if (nuvem.temCliente() && nuvem.temTokens()) nuvem.sincronizarAgora();
+  },
+  3 * 60 * 1000
+);
 
 // ==========================================
 // ATUALIZAÇÃO DO PROGRAMA PELA NUVEM
@@ -759,8 +944,12 @@ function versaoAtual() {
 }
 
 function compararVersoes(a, b) {
-  const pa = String(a || '').split('.').map(n => parseInt(n, 10) || 0);
-  const pb = String(b || '').split('.').map(n => parseInt(n, 10) || 0);
+  const pa = String(a || '')
+    .split('.')
+    .map(n => parseInt(n, 10) || 0);
+  const pb = String(b || '')
+    .split('.')
+    .map(n => parseInt(n, 10) || 0);
   for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
     const x = pa[i] || 0;
     const y = pb[i] || 0;
@@ -777,12 +966,19 @@ function copiarRecursivo(de, para) {
     const d = path.join(para, it.name);
     if (it.isDirectory()) copiarRecursivo(f, d);
     else {
-      try { fs.copyFileSync(f, d); } catch (e) {}
+      try {
+        fs.copyFileSync(f, d);
+      } catch (e) {}
     }
   }
 }
 
-const ARQ_PROTEGIDOS = new Set(['voltstock.db', 'voltstock.db-wal', 'voltstock.db-shm', 'nuvem_config.json']);
+const ARQ_PROTEGIDOS = new Set([
+  'voltstock.db',
+  'voltstock.db-wal',
+  'voltstock.db-shm',
+  'nuvem_config.json',
+]);
 
 app.get('/api/atualizacao/status', exigirAdmin, async (req, res) => {
   try {
@@ -794,10 +990,12 @@ app.get('/api/atualizacao/status', exigirAdmin, async (req, res) => {
       versaoAtual: atual,
       versaoDisponivel: disponivel,
       temAtualizacao: !!disponivel && compararVersoes(disponivel, atual) > 0,
-      conectado
+      conectado,
     });
   } catch (error) {
-    res.status(500).json({ erro: 'Falha ao verificar atualização', detalhes: msgErroInterno(error) });
+    res
+      .status(500)
+      .json({ erro: 'Falha ao verificar atualização', detalhes: msgErroInterno(error) });
   }
 });
 
@@ -805,8 +1003,10 @@ app.post('/api/atualizacao/aplicar', exigirAdmin, async (req, res) => {
   try {
     const atual = versaoAtual();
     const baixado = await nuvem.baixarAtualizacaoNuvem();
-    if (!baixado.ok) return res.status(500).json({ erro: 'Falha ao baixar atualização', detalhes: baixado.erro });
-    if (!baixado.disponivel) return res.status(404).json({ erro: 'Nenhum pacote de atualização na nuvem.' });
+    if (!baixado.ok)
+      return res.status(500).json({ erro: 'Falha ao baixar atualização', detalhes: baixado.erro });
+    if (!baixado.disponivel)
+      return res.status(404).json({ erro: 'Nenhum pacote de atualização na nuvem.' });
     if (baixado.versao && compararVersoes(baixado.versao, atual) <= 0) {
       return res.json({ mensagem: `Sistema já está na versão ${atual} (atualizada).` });
     }
@@ -831,11 +1031,22 @@ app.post('/api/atualizacao/aplicar', exigirAdmin, async (req, res) => {
     const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
     const backupDir = path.join(PASTA_BACKUP_CODIGO, stamp);
     fs.mkdirSync(backupDir, { recursive: true });
-    for (const nome of ['server.js', 'database.js', 'nuvem.js', 'package.json', 'package-lock.json', 'versao.txt', 'public']) {
+    for (const nome of [
+      'server.js',
+      'database.js',
+      'nuvem.js',
+      'package.json',
+      'package-lock.json',
+      'versao.txt',
+      'public',
+    ]) {
       const de = path.join(__dirname, nome);
       if (!fs.existsSync(de)) continue;
       if (nome === 'public') copiarRecursivo(de, path.join(backupDir, nome));
-      else try { fs.copyFileSync(de, path.join(backupDir, nome)); } catch (e) {}
+      else
+        try {
+          fs.copyFileSync(de, path.join(backupDir, nome));
+        } catch (e) {}
     }
 
     // Aplica o novo código (mantém banco, credenciais e pastas de dados)
@@ -846,21 +1057,34 @@ app.post('/api/atualizacao/aplicar', exigirAdmin, async (req, res) => {
       const de = path.join(extraido, nome);
       const para = path.join(__dirname, nome);
       if (it.isDirectory()) {
-        if (nome === 'public') copiarRecursivo(de, para); // não apaga uploads
+        if (nome === 'public')
+          copiarRecursivo(de, para); // não apaga uploads
         else copiarRecursivo(de, para);
       } else {
-        try { fs.copyFileSync(de, para); } catch (e) {}
+        try {
+          fs.copyFileSync(de, para);
+        } catch (e) {}
       }
     }
     // versao.txt vem no pacote
-    try { fs.copyFileSync(path.join(extraido, 'versao.txt'), ARQUIVO_VERSAO); } catch (e) {}
+    try {
+      fs.copyFileSync(path.join(extraido, 'versao.txt'), ARQUIVO_VERSAO);
+    } catch (e) {}
 
-    registrarLog('ATUALIZACAO_SISTEMA', req.usuario.id, req.usuario.username,
-      `Aplicou atualização ${atual} -> ${baixado.versao}`, obterIp(req));
+    registrarLog(
+      'ATUALIZACAO_SISTEMA',
+      req.usuario.id,
+      req.usuario.username,
+      `Aplicou atualização ${atual} -> ${baixado.versao}`,
+      obterIp(req)
+    );
 
     // O servidor roda pelo launcher iniciar.bat (loop), que reinicia sozinho
     // com o código novo. Por isso aqui só encerramos o processo atual.
-    res.json({ mensagem: `Atualização para ${baixado.versao} aplicada. O sistema está reiniciando...`, reiniciando: true });
+    res.json({
+      mensagem: `Atualização para ${baixado.versao} aplicada. O sistema está reiniciando...`,
+      reiniciando: true,
+    });
     setTimeout(() => process.exit(0), 900);
   } catch (error) {
     res.status(500).json({ erro: 'Falha ao aplicar atualização', detalhes: msgErroInterno(error) });
@@ -890,13 +1114,16 @@ function salvarImagemChat(dataUrl) {
   // Limite total (anti-encher o banco): soma das fotos já guardadas
   const total = db.prepare('SELECT COALESCE(SUM(tamanho), 0) AS t FROM chat_anexos').get().t;
   if (total + buf.length > LIMITE_TOTAL_UPLOADS) {
-    throw new Error('Limite total de fotos do chat atingido. Remova fotos antigas ou aumente o armazenamento.');
+    throw new Error(
+      'Limite total de fotos do chat atingido. Remova fotos antigas ou aumente o armazenamento.'
+    );
   }
 
   const mime = `image/${tipo === 'jpg' ? 'jpeg' : tipo}`;
   const id = crypto.randomBytes(24).toString('hex');
-  db.prepare('INSERT INTO chat_anexos (id, mime, nome, tamanho, conteudo) VALUES (?, ?, ?, ?, ?)')
-    .run(id, mime, null, buf.length, buf);
+  db.prepare(
+    'INSERT INTO chat_anexos (id, mime, nome, tamanho, conteudo) VALUES (?, ?, ?, ?, ?)'
+  ).run(id, mime, null, buf.length, buf);
 
   return `/api/chat/midia/${id}`;
 }
@@ -904,7 +1131,9 @@ function salvarImagemChat(dataUrl) {
 // Serve a foto do chat guardada no banco (id aleatório inacessível)
 app.get('/api/chat/midia/:id', (req, res) => {
   try {
-    const anexo = db.prepare('SELECT mime, conteudo FROM chat_anexos WHERE id = ?').get(req.params.id);
+    const anexo = db
+      .prepare('SELECT mime, conteudo FROM chat_anexos WHERE id = ?')
+      .get(req.params.id);
     if (!anexo) return res.status(404).send('Imagem não encontrada.');
     res.set('Content-Type', anexo.mime || 'image/jpeg');
     res.set('Cache-Control', 'private, max-age=31536000');
@@ -925,7 +1154,9 @@ function legendaUltimaMensagem(mc) {
 app.get('/api/chat/contatos', (req, res) => {
   try {
     const eu = req.usuario.id;
-    const contatos = db.prepare(`
+    const contatos = db
+      .prepare(
+        `
       SELECT
         u.id, u.username, u.nome_completo, u.cargo, u.role, u.ativo,
         (SELECT COUNT(*) FROM mensagens_chat mc
@@ -944,7 +1175,9 @@ app.get('/api/chat/contatos', (req, res) => {
       FROM usuarios u
       WHERE u.id != ? AND u.ativo = 1 AND u.id IN (SELECT id FROM usuarios WHERE ativo = 1)
       ORDER BY u.nome_completo COLLATE NOCASE ASC
-    `).all(eu, eu, eu, eu, eu, eu);
+    `
+      )
+      .all(eu, eu, eu, eu, eu, eu);
     res.json(contatos);
   } catch (error) {
     res.status(500).json({ erro: 'Falha ao carregar contatos', detalhes: msgErroInterno(error) });
@@ -956,12 +1189,17 @@ app.get('/api/chat/:id', (req, res) => {
   try {
     const eu = req.usuario.id;
     const outroId = Number(req.params.id);
-    if (outroId === eu) return res.status(400).json({ erro: 'Você não pode conversar consigo mesmo.' });
+    if (outroId === eu)
+      return res.status(400).json({ erro: 'Você não pode conversar consigo mesmo.' });
 
-    const outro = db.prepare('SELECT id, nome_completo, username, ativo FROM usuarios WHERE id = ?').get(outroId);
+    const outro = db
+      .prepare('SELECT id, nome_completo, username, ativo FROM usuarios WHERE id = ?')
+      .get(outroId);
     if (!outro) return res.status(404).json({ erro: 'Usuário não localizado.' });
 
-    const mensagens = db.prepare(`
+    const mensagens = db
+      .prepare(
+        `
       SELECT m.id, m.mensagem, m.imagem, m.lida, m.criado_em, m.remetente_id,
              u.nome_completo AS remetente_nome
       FROM mensagens_chat m
@@ -969,7 +1207,9 @@ app.get('/api/chat/:id', (req, res) => {
       WHERE (m.remetente_id = ? AND m.destinatario_id = ?)
          OR (m.remetente_id = ? AND m.destinatario_id = ?)
       ORDER BY m.id ASC
-    `).all(eu, outroId, outroId, eu);
+    `
+      )
+      .all(eu, outroId, outroId, eu);
 
     res.json({ outro, mensagens });
   } catch (error) {
@@ -992,7 +1232,8 @@ app.post('/api/chat/:id', express.json({ limit: '12mb' }), (req, res) => {
     if (texto.length > 1000) {
       return res.status(400).json({ erro: 'Mensagem muito longa (máximo de 1000 caracteres).' });
     }
-    if (outroId === eu) return res.status(400).json({ erro: 'Você não pode conversar consigo mesmo.' });
+    if (outroId === eu)
+      return res.status(400).json({ erro: 'Você não pode conversar consigo mesmo.' });
 
     const outro = db.prepare('SELECT id FROM usuarios WHERE id = ? AND ativo = 1').get(outroId);
     if (!outro) return res.status(404).json({ erro: 'Destinatário não localizado ou desativado.' });
@@ -1007,19 +1248,32 @@ app.post('/api/chat/:id', express.json({ limit: '12mb' }), (req, res) => {
       }
     }
 
-    const result = db.prepare(`
+    const result = db
+      .prepare(
+        `
       INSERT INTO mensagens_chat (remetente_id, destinatario_id, mensagem, imagem)
       VALUES (?, ?, ?, ?)
-    `).run(eu, outroId, texto, caminhoImagem);
+    `
+      )
+      .run(eu, outroId, texto, caminhoImagem);
 
-    const nova = db.prepare(`
+    const nova = db
+      .prepare(
+        `
       SELECT m.id, m.mensagem, m.imagem, m.lida, m.criado_em, m.remetente_id, u.nome_completo AS remetente_nome
       FROM mensagens_chat m JOIN usuarios u ON u.id = m.remetente_id
       WHERE m.id = ?
-    `).get(result.lastInsertRowid);
+    `
+      )
+      .get(result.lastInsertRowid);
 
-    registrarLog('CHAT_MENSAGEM', eu, req.usuario.username,
-      `Enviou ${caminhoImagem ? 'foto 📷' : 'mensagem'} para ${outroId}`, obterIp(req));
+    registrarLog(
+      'CHAT_MENSAGEM',
+      eu,
+      req.usuario.username,
+      `Enviou ${caminhoImagem ? 'foto 📷' : 'mensagem'} para ${outroId}`,
+      obterIp(req)
+    );
 
     // Foto nova (agora guardada no banco): sobe o backup logo para a nuvem.
     if (caminhoImagem) nuvem.agendarSincronizacaoNuvem();
@@ -1035,10 +1289,12 @@ app.post('/api/chat/:id/lidas', (req, res) => {
   try {
     const eu = req.usuario.id;
     const outroId = Number(req.params.id);
-    db.prepare(`
+    db.prepare(
+      `
       UPDATE mensagens_chat SET lida = 1
       WHERE destinatario_id = ? AND remetente_id = ? AND lida = 0
-    `).run(eu, outroId);
+    `
+    ).run(eu, outroId);
     res.json({ mensagem: 'Mensagens marcadas como lidas.' });
   } catch (error) {
     res.status(500).json({ erro: 'Falha ao marcar lidas', detalhes: msgErroInterno(error) });
@@ -1048,9 +1304,13 @@ app.post('/api/chat/:id/lidas', (req, res) => {
 // Total de mensagens não lidas (badge na aba CHAT)
 app.get('/api/chat/naolidas/total', (req, res) => {
   try {
-    const total = db.prepare(`
+    const total = db
+      .prepare(
+        `
       SELECT COUNT(*) AS total FROM mensagens_chat WHERE destinatario_id = ? AND lida = 0
-    `).get(req.usuario.id);
+    `
+      )
+      .get(req.usuario.id);
     res.json({ total: total.total });
   } catch (error) {
     res.status(500).json({ erro: 'Falha ao consultar não lidas', detalhes: msgErroInterno(error) });
@@ -1064,7 +1324,15 @@ app.get('/api/chat/naolidas/total', (req, res) => {
 // esta "versão" muda e o app recarrega automaticamente em todos.
 app.get('/api/versao', (req, res) => {
   try {
-    const arquivos = ['index.html', 'login.html', 'app.js', 'style.css', 'sw.js', 'manifest.webmanifest', 'icons/icon.svg'];
+    const arquivos = [
+      'index.html',
+      'login.html',
+      'app.js',
+      'style.css',
+      'sw.js',
+      'manifest.webmanifest',
+      'icons/icon.svg',
+    ];
     let max = 0;
     for (const f of arquivos) {
       try {
@@ -1097,23 +1365,40 @@ app.get('/api/notificacoes', (req, res) => {
     const visita = db.prepare('SELECT * FROM notificacoes_visitas WHERE usuario_id = ?').get(eu);
     const ultimoLidoId = visita ? visita.ultimo_log_id : 0;
 
-    const excluidos = ['LOGIN_SUCESSO', 'LOGIN_FALHA', 'LOGOUT', 'ACESSO_NEGADO', 'LOGIN_BLOQUEADO', 'LOGIN_DESATIVADO'];
+    const excluidos = [
+      'LOGIN_SUCESSO',
+      'LOGIN_FALHA',
+      'LOGOUT',
+      'ACESSO_NEGADO',
+      'LOGIN_BLOQUEADO',
+      'LOGIN_DESATIVADO',
+    ];
 
-    const ultimas = db.prepare(`
+    const ultimas = db
+      .prepare(
+        `
       SELECT id, evento, username_tentativa, detalhes, ip, data_hora AS criado_em
       FROM logs_seguranca
       WHERE evento NOT IN (${excluidos.map(() => '?').join(', ')})
       ORDER BY id DESC LIMIT 50
-    `).all(...excluidos);
+    `
+      )
+      .all(...excluidos);
 
-    const naoLidas = db.prepare(`
+    const naoLidas = db
+      .prepare(
+        `
       SELECT COUNT(*) AS total FROM logs_seguranca
       WHERE evento NOT IN (${excluidos.map(() => '?').join(', ')}) AND id > ?
-    `).all(...excluidos, ultimoLidoId)[0].total;
+    `
+      )
+      .all(...excluidos, ultimoLidoId)[0].total;
 
     res.json({ ultimoLidoId, naoLidas, notificacoes: ultimas });
   } catch (error) {
-    res.status(500).json({ erro: 'Falha ao carregar notificações', detalhes: msgErroInterno(error) });
+    res
+      .status(500)
+      .json({ erro: 'Falha ao carregar notificações', detalhes: msgErroInterno(error) });
   }
 });
 
@@ -1123,13 +1408,15 @@ app.post('/api/notificacoes/lidas', (req, res) => {
     const eu = req.usuario.id;
     const { ultimoId } = req.body;
     const id = Number(ultimoId) || 0;
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO notificacoes_visitas (usuario_id, ultimo_log_id, atualizado_em)
       VALUES (?, ?, CURRENT_TIMESTAMP)
       ON CONFLICT(usuario_id) DO UPDATE SET
         ultimo_log_id = excluded.ultimo_log_id,
         atualizado_em = CURRENT_TIMESTAMP
-    `).run(eu, id);
+    `
+    ).run(eu, id);
     res.json({ mensagem: 'Notificações marcadas como lidas.' });
   } catch (error) {
     res.status(500).json({ erro: 'Falha ao marcar notificações', detalhes: msgErroInterno(error) });
@@ -1143,10 +1430,14 @@ app.post('/api/notificacoes/lidas', (req, res) => {
 // Listar observações compartilhadas
 app.get('/api/observacoes', (req, res) => {
   try {
-    const obs = db.prepare('SELECT * FROM observacoes_setores ORDER BY criado_em DESC, id DESC').all();
+    const obs = db
+      .prepare('SELECT * FROM observacoes_setores ORDER BY criado_em DESC, id DESC')
+      .all();
     res.json(obs);
   } catch (error) {
-    res.status(500).json({ erro: 'Falha ao carregar observações', detalhes: msgErroInterno(error) });
+    res
+      .status(500)
+      .json({ erro: 'Falha ao carregar observações', detalhes: msgErroInterno(error) });
   }
 });
 
@@ -1158,18 +1449,29 @@ app.post('/api/observacoes', (req, res) => {
       return res.status(400).json({ erro: 'Escreva a observação antes de publicar.' });
     }
 
-    const result = db.prepare(`
+    const result = db
+      .prepare(
+        `
       INSERT INTO observacoes_setores (autor, setor, observacao)
       VALUES (?, ?, ?)
-    `).run(
-      nome || req.usuario.nome_completo || req.usuario.username,
-      setor || 'Almoxarifado ServMil',
-      observacao.trim()
-    );
+    `
+      )
+      .run(
+        nome || req.usuario.nome_completo || req.usuario.username,
+        setor || 'Almoxarifado ServMil',
+        observacao.trim()
+      );
 
-    const nova = db.prepare('SELECT * FROM observacoes_setores WHERE id = ?').get(result.lastInsertRowid);
-    registrarLog('OBSERVACAO_PUBLICADA', req.usuario.id, req.usuario.username,
-      `Publicou observação no mural (setor ${nova.setor})`, obterIp(req));
+    const nova = db
+      .prepare('SELECT * FROM observacoes_setores WHERE id = ?')
+      .get(result.lastInsertRowid);
+    registrarLog(
+      'OBSERVACAO_PUBLICADA',
+      req.usuario.id,
+      req.usuario.username,
+      `Publicou observação no mural (setor ${nova.setor})`,
+      obterIp(req)
+    );
     res.status(201).json(nova);
   } catch (error) {
     res.status(500).json({ erro: 'Erro ao publicar observação', detalhes: msgErroInterno(error) });
@@ -1183,8 +1485,13 @@ app.delete('/api/observacoes/:id', (req, res) => {
     const obs = db.prepare('SELECT * FROM observacoes_setores WHERE id = ?').get(id);
     const result = db.prepare('DELETE FROM observacoes_setores WHERE id = ?').run(id);
     if (result.changes === 0) return res.status(404).json({ erro: 'Observação não localizada' });
-    registrarLog('OBSERVACAO_APAGADA', req.usuario.id, req.usuario.username,
-      `Apagou observação "${obs?.observacao?.slice(0, 50) || id}"${obs ? ` (de ${obs.autor})` : ''}`, obterIp(req));
+    registrarLog(
+      'OBSERVACAO_APAGADA',
+      req.usuario.id,
+      req.usuario.username,
+      `Apagou observação "${obs?.observacao?.slice(0, 50) || id}"${obs ? ` (de ${obs.autor})` : ''}`,
+      obterIp(req)
+    );
     res.json({ mensagem: 'Observação apagada.' });
   } catch (error) {
     res.status(500).json({ erro: 'Erro ao apagar observação', detalhes: msgErroInterno(error) });
@@ -1198,15 +1505,22 @@ app.patch('/api/observacoes/:id/status', (req, res) => {
     const { status } = req.body;
     const statusValidos = ['EM_ABERTO', 'AGUARDANDO', 'RESOLVIDO'];
     if (!statusValidos.includes(status)) {
-      return res.status(400).json({ erro: 'Status inválido. Use EM_ABERTO, AGUARDANDO ou RESOLVIDO.' });
+      return res
+        .status(400)
+        .json({ erro: 'Status inválido. Use EM_ABERTO, AGUARDANDO ou RESOLVIDO.' });
     }
 
     const obs = db.prepare('SELECT * FROM observacoes_setores WHERE id = ?').get(id);
     if (!obs) return res.status(404).json({ erro: 'Observação não localizada' });
 
     db.prepare('UPDATE observacoes_setores SET status = ? WHERE id = ?').run(status, id);
-    registrarLog('OBSERVACAO_STATUS', req.usuario.id, req.usuario.username,
-      `Alterou status "${obs.autor}" (${obs.setor}): ${obs.status} → ${status}`, obterIp(req));
+    registrarLog(
+      'OBSERVACAO_STATUS',
+      req.usuario.id,
+      req.usuario.username,
+      `Alterou status "${obs.autor}" (${obs.setor}): ${obs.status} → ${status}`,
+      obterIp(req)
+    );
 
     res.json({ ...obs, status });
   } catch (error) {
@@ -1253,7 +1567,17 @@ app.get('/api/estoque', (req, res) => {
 // Cadastrar novo item de estoque
 app.post('/api/estoque', (req, res) => {
   try {
-    const { codigo_id, codigo_sku, nome, categoria, quantidade_atual, quantidade_minima, unidade_medida, localizacao, preco_estimado } = req.body;
+    const {
+      codigo_id,
+      codigo_sku,
+      nome,
+      categoria,
+      quantidade_atual,
+      quantidade_minima,
+      unidade_medida,
+      localizacao,
+      preco_estimado,
+    } = req.body;
     const codFinal = (codigo_id || codigo_sku || '').toUpperCase().trim();
 
     if (!codFinal || !nome || !categoria) {
@@ -1277,9 +1601,16 @@ app.post('/api/estoque', (req, res) => {
       Number(preco_estimado) || 0.0
     );
 
-    const novoItem = db.prepare('SELECT * FROM estoque_itens WHERE id = ?').get(result.lastInsertRowid);
-    registrarLog('ESTOQUE_CADASTRO', req.usuario.id, req.usuario.username,
-      `Cadastrou item "${novoItem.nome}" (${codFinal}) qtd ${novoItem.quantidade_atual} ${novoItem.unidade_medida}`, obterIp(req));
+    const novoItem = db
+      .prepare('SELECT * FROM estoque_itens WHERE id = ?')
+      .get(result.lastInsertRowid);
+    registrarLog(
+      'ESTOQUE_CADASTRO',
+      req.usuario.id,
+      req.usuario.username,
+      `Cadastrou item "${novoItem.nome}" (${codFinal}) qtd ${novoItem.quantidade_atual} ${novoItem.unidade_medida}`,
+      obterIp(req)
+    );
     res.status(201).json(enriquecerItemEstoque(novoItem));
   } catch (error) {
     if (error.message.includes('UNIQUE constraint failed')) {
@@ -1306,21 +1637,28 @@ app.patch('/api/estoque/:id/movimento', (req, res) => {
 
     const novaQuantidade = Math.max(0, item.quantidade_atual + Number(delta));
 
-    db.prepare(`
+    db.prepare(
+      `
       UPDATE estoque_itens 
       SET quantidade_atual = ?, atualizado_em = CURRENT_TIMESTAMP 
       WHERE id = ?
-    `).run(novaQuantidade, id);
+    `
+    ).run(novaQuantidade, id);
 
     const itemAtualizado = db.prepare('SELECT * FROM estoque_itens WHERE id = ?').get(id);
     const itemEnriquecido = enriquecerItemEstoque(itemAtualizado);
 
     // Se caiu no estoque crítico (<= quantidade_minima), registra no histórico
-    if (itemEnriquecido.status_alerta === 'CRITICO' && item.quantidade_atual > item.quantidade_minima) {
-      db.prepare(`
+    if (
+      itemEnriquecido.status_alerta === 'CRITICO' &&
+      item.quantidade_atual > item.quantidade_minima
+    ) {
+      db.prepare(
+        `
         INSERT INTO historico_alertas (tipo, origem_id, titulo, mensagem)
         VALUES (?, ?, ?, ?)
-      `).run(
+      `
+      ).run(
         'ESTOQUE_BAIXO',
         id,
         `Estoque Crítico: ${item.nome}`,
@@ -1328,12 +1666,19 @@ app.patch('/api/estoque/:id/movimento', (req, res) => {
       );
     }
 
-    registrarLog('ESTOQUE_MOVIMENTO', req.usuario.id, req.usuario.username,
-      `"${item.nome}" (${item.codigo_id}): ${item.quantidade_atual} → ${novaQuantidade} ${item.unidade_medida} (delta ${Number(delta)})`, obterIp(req));
+    registrarLog(
+      'ESTOQUE_MOVIMENTO',
+      req.usuario.id,
+      req.usuario.username,
+      `"${item.nome}" (${item.codigo_id}): ${item.quantidade_atual} → ${novaQuantidade} ${item.unidade_medida} (delta ${Number(delta)})`,
+      obterIp(req)
+    );
 
     res.json(itemEnriquecido);
   } catch (error) {
-    res.status(500).json({ erro: 'Falha na movimentação de estoque', detalhes: msgErroInterno(error) });
+    res
+      .status(500)
+      .json({ erro: 'Falha na movimentação de estoque', detalhes: msgErroInterno(error) });
   }
 });
 
@@ -1341,7 +1686,16 @@ app.patch('/api/estoque/:id/movimento', (req, res) => {
 app.put('/api/estoque/:id', (req, res) => {
   try {
     const id = Number(req.params.id);
-    const { codigo_id, nome, categoria, quantidade_atual, quantidade_minima, unidade_medida, localizacao, preco_estimado } = req.body;
+    const {
+      codigo_id,
+      nome,
+      categoria,
+      quantidade_atual,
+      quantidade_minima,
+      unidade_medida,
+      localizacao,
+      preco_estimado,
+    } = req.body;
 
     const atual = db.prepare('SELECT * FROM estoque_itens WHERE id = ?').get(id);
     if (!atual) {
@@ -1350,11 +1704,13 @@ app.put('/api/estoque/:id', (req, res) => {
 
     const novoCodigo = (codigo_id ?? atual.codigo_id).toString().trim().toUpperCase();
 
-    db.prepare(`
+    db.prepare(
+      `
       UPDATE estoque_itens
       SET codigo_id = ?, nome = ?, categoria = ?, quantidade_atual = ?, quantidade_minima = ?, unidade_medida = ?, localizacao = ?, preco_estimado = ?, atualizado_em = CURRENT_TIMESTAMP
       WHERE id = ?
-    `).run(
+    `
+    ).run(
       novoCodigo,
       (nome ?? atual.nome).toString().trim(),
       (categoria ?? atual.categoria).toString().trim(),
@@ -1367,8 +1723,13 @@ app.put('/api/estoque/:id', (req, res) => {
     );
 
     const atualizado = db.prepare('SELECT * FROM estoque_itens WHERE id = ?').get(id);
-    registrarLog('ESTOQUE_EDICAO', req.usuario.id, req.usuario.username,
-      `Editou identificação do item "${atualizado.nome}" (${atualizado.codigo_id})`, obterIp(req));
+    registrarLog(
+      'ESTOQUE_EDICAO',
+      req.usuario.id,
+      req.usuario.username,
+      `Editou identificação do item "${atualizado.nome}" (${atualizado.codigo_id})`,
+      obterIp(req)
+    );
     res.json(enriquecerItemEstoque(atualizado));
   } catch (error) {
     if (error.message.includes('UNIQUE constraint failed')) {
@@ -1385,8 +1746,13 @@ app.delete('/api/estoque/:id', (req, res) => {
     const item = db.prepare('SELECT * FROM estoque_itens WHERE id = ?').get(id);
     const result = db.prepare('DELETE FROM estoque_itens WHERE id = ?').run(id);
     if (result.changes === 0) return res.status(404).json({ erro: 'Item não localizado' });
-    registrarLog('ESTOQUE_EXCLUSAO', req.usuario.id, req.usuario.username,
-      `Excluiu item "${item?.nome || id}" (${item?.codigo_id || ''})`, obterIp(req));
+    registrarLog(
+      'ESTOQUE_EXCLUSAO',
+      req.usuario.id,
+      req.usuario.username,
+      `Excluiu item "${item?.nome || id}" (${item?.codigo_id || ''})`,
+      obterIp(req)
+    );
     res.json({ mensagem: 'Item removido com sucesso' });
   } catch (error) {
     res.status(500).json({ erro: 'Erro ao excluir item', detalhes: msgErroInterno(error) });
@@ -1403,7 +1769,9 @@ app.get('/api/categorias', (req, res) => {
     const cats = db.prepare('SELECT * FROM categorias ORDER BY nome COLLATE NOCASE').all();
     res.json(cats);
   } catch (error) {
-    res.status(500).json({ erro: 'Falha ao consultar categorias', detalhes: msgErroInterno(error) });
+    res
+      .status(500)
+      .json({ erro: 'Falha ao consultar categorias', detalhes: msgErroInterno(error) });
   }
 });
 
@@ -1415,8 +1783,13 @@ app.post('/api/categorias', (req, res) => {
 
     const result = db.prepare('INSERT INTO categorias (nome) VALUES (?)').run(nome);
     const nova = db.prepare('SELECT * FROM categorias WHERE id = ?').get(result.lastInsertRowid);
-    registrarLog('CATEGORIA_CADASTRO', req.usuario.id, req.usuario.username,
-      `Cadastrou categoria "${nome}"`, obterIp(req));
+    registrarLog(
+      'CATEGORIA_CADASTRO',
+      req.usuario.id,
+      req.usuario.username,
+      `Cadastrou categoria "${nome}"`,
+      obterIp(req)
+    );
     res.status(201).json(nova);
   } catch (error) {
     if (error.message.includes('UNIQUE constraint failed')) {
@@ -1437,8 +1810,13 @@ app.put('/api/categorias/:id', (req, res) => {
     if (result.changes === 0) return res.status(404).json({ erro: 'Categoria não localizada' });
 
     const atualizada = db.prepare('SELECT * FROM categorias WHERE id = ?').get(id);
-    registrarLog('CATEGORIA_EDICAO', req.usuario.id, req.usuario.username,
-      `Renomeou categoria "${(atualizada?.nome) || nome}"`, obterIp(req));
+    registrarLog(
+      'CATEGORIA_EDICAO',
+      req.usuario.id,
+      req.usuario.username,
+      `Renomeou categoria "${atualizada?.nome || nome}"`,
+      obterIp(req)
+    );
     res.json(atualizada);
   } catch (error) {
     if (error.message.includes('UNIQUE constraint failed')) {
@@ -1455,8 +1833,13 @@ app.delete('/api/categorias/:id', (req, res) => {
     const cat = db.prepare('SELECT * FROM categorias WHERE id = ?').get(id);
     const result = db.prepare('DELETE FROM categorias WHERE id = ?').run(id);
     if (result.changes === 0) return res.status(404).json({ erro: 'Categoria não localizada' });
-    registrarLog('CATEGORIA_EXCLUSAO', req.usuario.id, req.usuario.username,
-      `Excluiu categoria "${cat?.nome || id}"`, obterIp(req));
+    registrarLog(
+      'CATEGORIA_EXCLUSAO',
+      req.usuario.id,
+      req.usuario.username,
+      `Excluiu categoria "${cat?.nome || id}"`,
+      obterIp(req)
+    );
     res.json({ mensagem: 'Categoria removida' });
   } catch (error) {
     res.status(500).json({ erro: 'Erro ao excluir categoria', detalhes: msgErroInterno(error) });
@@ -1471,7 +1854,9 @@ app.delete('/api/categorias/:id', (req, res) => {
 app.get('/api/equipamentos', (req, res) => {
   try {
     const { status_filtro } = req.query;
-    const stmt = db.prepare('SELECT * FROM equipamentos_calibracao ORDER BY data_validade_calibracao ASC');
+    const stmt = db.prepare(
+      'SELECT * FROM equipamentos_calibracao ORDER BY data_validade_calibracao ASC'
+    );
     let lista = stmt.all().map(enriquecerEquipamento);
 
     if (status_filtro && status_filtro !== 'TODOS') {
@@ -1487,10 +1872,23 @@ app.get('/api/equipamentos', (req, res) => {
 // Cadastrar novo equipamento
 app.post('/api/equipamentos', (req, res) => {
   try {
-    const { tag_patrimonio, nome, fabricante, modelo, numero_serie, data_ultima_calibracao, data_validade_calibracao, laboratorio, certificado_num, responsavel } = req.body;
+    const {
+      tag_patrimonio,
+      nome,
+      fabricante,
+      modelo,
+      numero_serie,
+      data_ultima_calibracao,
+      data_validade_calibracao,
+      laboratorio,
+      certificado_num,
+      responsavel,
+    } = req.body;
 
     if (!tag_patrimonio || !nome || !data_validade_calibracao) {
-      return res.status(400).json({ erro: 'Campos obrigatórios: tag_patrimonio, nome, data_validade_calibracao' });
+      return res
+        .status(400)
+        .json({ erro: 'Campos obrigatórios: tag_patrimonio, nome, data_validade_calibracao' });
     }
 
     const stmt = db.prepare(`
@@ -1512,15 +1910,24 @@ app.post('/api/equipamentos', (req, res) => {
       responsavel || 'Almoxarifado'
     );
 
-    const novo = db.prepare('SELECT * FROM equipamentos_calibracao WHERE id = ?').get(result.lastInsertRowid);
-    registrarLog('EQUIP_CADASTRO', req.usuario.id, req.usuario.username,
-      `Cadastrou equipamento "${novo.nome}" (${novo.tag_patrimonio})`, obterIp(req));
+    const novo = db
+      .prepare('SELECT * FROM equipamentos_calibracao WHERE id = ?')
+      .get(result.lastInsertRowid);
+    registrarLog(
+      'EQUIP_CADASTRO',
+      req.usuario.id,
+      req.usuario.username,
+      `Cadastrou equipamento "${novo.nome}" (${novo.tag_patrimonio})`,
+      obterIp(req)
+    );
     res.status(201).json(enriquecerEquipamento(novo));
   } catch (error) {
     if (error.message.includes('UNIQUE constraint failed')) {
       return res.status(409).json({ erro: 'TAG de patrimônio já cadastrada' });
     }
-    res.status(500).json({ erro: 'Erro ao cadastrar equipamento', detalhes: msgErroInterno(error) });
+    res
+      .status(500)
+      .json({ erro: 'Erro ao cadastrar equipamento', detalhes: msgErroInterno(error) });
   }
 });
 
@@ -1528,24 +1935,54 @@ app.post('/api/equipamentos', (req, res) => {
 app.put('/api/equipamentos/:id', (req, res) => {
   try {
     const id = Number(req.params.id);
-    const { nome, fabricante, modelo, numero_serie, data_ultima_calibracao, data_validade_calibracao, laboratorio, certificado_num, responsavel } = req.body;
+    const {
+      nome,
+      fabricante,
+      modelo,
+      numero_serie,
+      data_ultima_calibracao,
+      data_validade_calibracao,
+      laboratorio,
+      certificado_num,
+      responsavel,
+    } = req.body;
 
-    const result = db.prepare(`
+    const result = db
+      .prepare(
+        `
       UPDATE equipamentos_calibracao
       SET nome = ?, fabricante = ?, modelo = ?, numero_serie = ?, data_ultima_calibracao = ?, data_validade_calibracao = ?, laboratorio = ?, certificado_num = ?, responsavel = ?
       WHERE id = ?
-    `).run(
-      nome, fabricante, modelo, numero_serie, data_ultima_calibracao, data_validade_calibracao, laboratorio, certificado_num, responsavel, id
-    );
+    `
+      )
+      .run(
+        nome,
+        fabricante,
+        modelo,
+        numero_serie,
+        data_ultima_calibracao,
+        data_validade_calibracao,
+        laboratorio,
+        certificado_num,
+        responsavel,
+        id
+      );
 
     if (result.changes === 0) return res.status(404).json({ erro: 'Equipamento não localizado' });
 
     const atualizado = db.prepare('SELECT * FROM equipamentos_calibracao WHERE id = ?').get(id);
-    registrarLog('EQUIP_EDICAO', req.usuario.id, req.usuario.username,
-      `Editou equipamento "${atualizado.nome}" (${atualizado.tag_patrimonio})`, obterIp(req));
+    registrarLog(
+      'EQUIP_EDICAO',
+      req.usuario.id,
+      req.usuario.username,
+      `Editou equipamento "${atualizado.nome}" (${atualizado.tag_patrimonio})`,
+      obterIp(req)
+    );
     res.json(enriquecerEquipamento(atualizado));
   } catch (error) {
-    res.status(500).json({ erro: 'Erro ao atualizar equipamento', detalhes: msgErroInterno(error) });
+    res
+      .status(500)
+      .json({ erro: 'Erro ao atualizar equipamento', detalhes: msgErroInterno(error) });
   }
 });
 
@@ -1556,8 +1993,13 @@ app.delete('/api/equipamentos/:id', (req, res) => {
     const equip = db.prepare('SELECT * FROM equipamentos_calibracao WHERE id = ?').get(id);
     const result = db.prepare('DELETE FROM equipamentos_calibracao WHERE id = ?').run(id);
     if (result.changes === 0) return res.status(404).json({ erro: 'Equipamento não localizado' });
-    registrarLog('EQUIP_EXCLUSAO', req.usuario.id, req.usuario.username,
-      `Excluiu equipamento "${equip?.nome || id}" (${equip?.tag_patrimonio || ''})`, obterIp(req));
+    registrarLog(
+      'EQUIP_EXCLUSAO',
+      req.usuario.id,
+      req.usuario.username,
+      `Excluiu equipamento "${equip?.nome || id}" (${equip?.tag_patrimonio || ''})`,
+      obterIp(req)
+    );
     res.json({ mensagem: 'Equipamento removido' });
   } catch (error) {
     res.status(500).json({ erro: 'Erro ao excluir equipamento', detalhes: msgErroInterno(error) });
@@ -1571,7 +2013,9 @@ app.delete('/api/equipamentos/:id', (req, res) => {
 // Listar solicitações
 app.get('/api/compras', (req, res) => {
   try {
-    const solicitacoes = db.prepare('SELECT * FROM solicitacoes_compras ORDER BY data_solicitacao DESC').all();
+    const solicitacoes = db
+      .prepare('SELECT * FROM solicitacoes_compras ORDER BY data_solicitacao DESC')
+      .all();
     res.json(solicitacoes);
   } catch (error) {
     res.status(500).json({ erro: 'Erro ao buscar solicitações', detalhes: msgErroInterno(error) });
@@ -1602,28 +2046,40 @@ app.post('/api/compras', (req, res) => {
       urgencia || 'ALTA',
       solicitante || 'Almoxarifado ServMil',
       setor || 'Almoxarifado ServMil',
-      observacao || `Disparo automático de reposição. Saldo atual: ${item.quantidade_atual} ${item.unidade_medida}`
+      observacao ||
+        `Disparo automático de reposição. Saldo atual: ${item.quantidade_atual} ${item.unidade_medida}`
     );
 
-    const novaSolicitacao = db.prepare('SELECT * FROM solicitacoes_compras WHERE id = ?').get(result.lastInsertRowid);
+    const novaSolicitacao = db
+      .prepare('SELECT * FROM solicitacoes_compras WHERE id = ?')
+      .get(result.lastInsertRowid);
 
     // Registra no histórico de alertas
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO historico_alertas (tipo, origem_id, titulo, mensagem)
       VALUES (?, ?, ?, ?)
-    `).run(
+    `
+    ).run(
       'SOLICITACAO_COMPRA',
       novaSolicitacao.id,
       `Nova Solicitação de Compra: ${item.nome}`,
       `Solicitado lote de ${quantidade_solicitada} ${item.unidade_medida}. Urgência: ${urgencia || 'ALTA'}. Saldo atual: ${item.quantidade_atual}.`
     );
 
-    registrarLog('COMPRA_CRIACAO', req.usuario.id, req.usuario.username,
-      `Solicitou compra de "${item.nome}" x${quantidade_solicitada} (${urgencia || 'ALTA'})`, obterIp(req));
+    registrarLog(
+      'COMPRA_CRIACAO',
+      req.usuario.id,
+      req.usuario.username,
+      `Solicitou compra de "${item.nome}" x${quantidade_solicitada} (${urgencia || 'ALTA'})`,
+      obterIp(req)
+    );
 
     res.status(201).json(novaSolicitacao);
   } catch (error) {
-    res.status(500).json({ erro: 'Falha ao emitir solicitação de compra', detalhes: msgErroInterno(error) });
+    res
+      .status(500)
+      .json({ erro: 'Falha ao emitir solicitação de compra', detalhes: msgErroInterno(error) });
   }
 });
 
@@ -1635,8 +2091,13 @@ app.patch('/api/compras/:id/status', (req, res) => {
 
     db.prepare('UPDATE solicitacoes_compras SET status = ? WHERE id = ?').run(status, id);
     const atualizado = db.prepare('SELECT * FROM solicitacoes_compras WHERE id = ?').get(id);
-    registrarLog('COMPRA_STATUS', req.usuario.id, req.usuario.username,
-      `Alterou status da solicitação #REQ-${String(id).padStart(4, '0')} (${atualizado?.item_nome}) para ${status}`, obterIp(req));
+    registrarLog(
+      'COMPRA_STATUS',
+      req.usuario.id,
+      req.usuario.username,
+      `Alterou status da solicitação #REQ-${String(id).padStart(4, '0')} (${atualizado?.item_nome}) para ${status}`,
+      obterIp(req)
+    );
     res.json(atualizado);
   } catch (error) {
     res.status(500).json({ erro: 'Erro ao atualizar status', detalhes: msgErroInterno(error) });
@@ -1650,17 +2111,29 @@ app.patch('/api/compras/:id/feedback', (req, res) => {
     const { feedback_compras, status } = req.body;
 
     if (status) {
-      db.prepare('UPDATE solicitacoes_compras SET feedback_compras = ?, status = ? WHERE id = ?').run(feedback_compras, status, id);
+      db.prepare(
+        'UPDATE solicitacoes_compras SET feedback_compras = ?, status = ? WHERE id = ?'
+      ).run(feedback_compras, status, id);
     } else {
-      db.prepare('UPDATE solicitacoes_compras SET feedback_compras = ? WHERE id = ?').run(feedback_compras, id);
+      db.prepare('UPDATE solicitacoes_compras SET feedback_compras = ? WHERE id = ?').run(
+        feedback_compras,
+        id
+      );
     }
 
     const atualizado = db.prepare('SELECT * FROM solicitacoes_compras WHERE id = ?').get(id);
-    registrarLog('COMPRA_FEEDBACK', req.usuario.id, req.usuario.username,
-      `Atualizou feedback da solicitação #REQ-${String(id).padStart(4, '0')}${status ? ` (status ${status})` : ''}`, obterIp(req));
+    registrarLog(
+      'COMPRA_FEEDBACK',
+      req.usuario.id,
+      req.usuario.username,
+      `Atualizou feedback da solicitação #REQ-${String(id).padStart(4, '0')}${status ? ` (status ${status})` : ''}`,
+      obterIp(req)
+    );
     res.json(atualizado);
   } catch (error) {
-    res.status(500).json({ erro: 'Erro ao atualizar feedback de compras', detalhes: msgErroInterno(error) });
+    res
+      .status(500)
+      .json({ erro: 'Erro ao atualizar feedback de compras', detalhes: msgErroInterno(error) });
   }
 });
 
@@ -1671,10 +2144,14 @@ app.patch('/api/compras/:id/feedback', (req, res) => {
 // Listar os destinatários
 app.get('/api/destinatarios', (req, res) => {
   try {
-    const destinatarios = db.prepare('SELECT * FROM destinatarios_notificacao ORDER BY id ASC').all();
+    const destinatarios = db
+      .prepare('SELECT * FROM destinatarios_notificacao ORDER BY id ASC')
+      .all();
     res.json(destinatarios);
   } catch (error) {
-    res.status(500).json({ erro: 'Falha ao buscar destinatários', detalhes: msgErroInterno(error) });
+    res
+      .status(500)
+      .json({ erro: 'Falha ao buscar destinatários', detalhes: msgErroInterno(error) });
   }
 });
 
@@ -1684,20 +2161,27 @@ app.put('/api/destinatarios/:id', (req, res) => {
     const id = Number(req.params.id);
     const { nome, cargo, telefone_whatsapp, email, ativo } = req.body;
 
-    db.prepare(`
+    db.prepare(
+      `
       UPDATE destinatarios_notificacao
       SET nome = ?, cargo = ?, telefone_whatsapp = ?, email = ?, ativo = ?
       WHERE id = ?
-    `).run(
-      nome, cargo, telefone_whatsapp.replace(/\D/g, ''), email, ativo ? 1 : 0, id
-    );
+    `
+    ).run(nome, cargo, telefone_whatsapp.replace(/\D/g, ''), email, ativo ? 1 : 0, id);
 
     const atualizado = db.prepare('SELECT * FROM destinatarios_notificacao WHERE id = ?').get(id);
-    registrarLog('DESTINATARIO_EDICAO', req.usuario.id, req.usuario.username,
-      `Atualizou contato "${atualizado?.nome || id}" (cargo ${atualizado?.cargo || ''})`, obterIp(req));
+    registrarLog(
+      'DESTINATARIO_EDICAO',
+      req.usuario.id,
+      req.usuario.username,
+      `Atualizou contato "${atualizado?.nome || id}" (cargo ${atualizado?.cargo || ''})`,
+      obterIp(req)
+    );
     res.json(atualizado);
   } catch (error) {
-    res.status(500).json({ erro: 'Falha ao atualizar destinatário', detalhes: msgErroInterno(error) });
+    res
+      .status(500)
+      .json({ erro: 'Falha ao atualizar destinatário', detalhes: msgErroInterno(error) });
   }
 });
 
@@ -1709,12 +2193,17 @@ app.put('/api/destinatarios/:id', (req, res) => {
 app.get('/api/alertas/resumo', (req, res) => {
   try {
     const todosItens = db.prepare('SELECT * FROM estoque_itens').all().map(enriquecerItemEstoque);
-    const todosEquips = db.prepare('SELECT * FROM equipamentos_calibracao').all().map(enriquecerEquipamento);
+    const todosEquips = db
+      .prepare('SELECT * FROM equipamentos_calibracao')
+      .all()
+      .map(enriquecerEquipamento);
 
     const itensCriticos = todosItens.filter(i => i.status_alerta === 'CRITICO');
     const equipsAlerta15 = todosEquips.filter(e => e.status_calibracao === 'ALERTA_15_DIAS');
     const equipsVencidos = todosEquips.filter(e => e.status_calibracao === 'VENCIDO');
-    const comprasPendentes = db.prepare("SELECT COUNT(*) as total FROM solicitacoes_compras WHERE status = 'PENDENTE'").get().total;
+    const comprasPendentes = db
+      .prepare("SELECT COUNT(*) as total FROM solicitacoes_compras WHERE status = 'PENDENTE'")
+      .get().total;
 
     res.json({
       total_itens_estoque: todosItens.length,
@@ -1724,10 +2213,12 @@ app.get('/api/alertas/resumo', (req, res) => {
       equipamentos_vencidos: equipsVencidos.length,
       solicitacoes_compras_pendentes: comprasPendentes,
       itens_criticos_lista: itensCriticos.slice(0, 5),
-      equipamentos_criticos_lista: [...equipsVencidos, ...equipsAlerta15].slice(0, 5)
+      equipamentos_criticos_lista: [...equipsVencidos, ...equipsAlerta15].slice(0, 5),
     });
   } catch (error) {
-    res.status(500).json({ erro: 'Erro ao gerar resumo de alertas', detalhes: msgErroInterno(error) });
+    res
+      .status(500)
+      .json({ erro: 'Erro ao gerar resumo de alertas', detalhes: msgErroInterno(error) });
   }
 });
 
@@ -1736,7 +2227,9 @@ app.post('/api/alertas/disparar-multiplo', (req, res) => {
   try {
     const { tipo, item_id, equipamento_id, mensagem_customizada } = req.body;
 
-    const destinatariosAtivos = db.prepare('SELECT * FROM destinatarios_notificacao WHERE ativo = 1').all();
+    const destinatariosAtivos = db
+      .prepare('SELECT * FROM destinatarios_notificacao WHERE ativo = 1')
+      .all();
 
     let titulo = '';
     let corpoMensagem = '';
@@ -1745,7 +2238,8 @@ app.post('/api/alertas/disparar-multiplo', (req, res) => {
       const item = db.prepare('SELECT * FROM estoque_itens WHERE id = ?').get(Number(item_id));
       if (!item) return res.status(404).json({ erro: 'Item não encontrado' });
       titulo = `🚨 ALERTA CRÍTICO: ESTOQUE BAIXO - ${item.nome}`;
-      corpoMensagem = `*SERVMIL - ALERTA DE ALMOXARIFADO*\n\n` +
+      corpoMensagem =
+        `*SERVMIL - ALERTA DE ALMOXARIFADO*\n\n` +
         `📦 *Item:* ${item.nome}\n` +
         `🔖 *ID/Código:* ${item.codigo_id}\n` +
         `📍 *Localização:* ${item.localizacao}\n` +
@@ -1753,11 +2247,14 @@ app.post('/api/alertas/disparar-multiplo', (req, res) => {
         `🛑 *Limite Mínimo:* ${item.quantidade_minima} ${item.unidade_medida}\n\n` +
         `Ação imediata necessária: Solicitar reposição urgente junto ao setor de Compras.`;
     } else if (tipo === 'CALIBRACAO' && equipamento_id) {
-      const equip = db.prepare('SELECT * FROM equipamentos_calibracao WHERE id = ?').get(Number(equipamento_id));
+      const equip = db
+        .prepare('SELECT * FROM equipamentos_calibracao WHERE id = ?')
+        .get(Number(equipamento_id));
       if (!equip) return res.status(404).json({ erro: 'Equipamento não encontrado' });
       const equipEnriquecido = enriquecerEquipamento(equip);
       titulo = `⚡ ALERTA DE METROLOGIA: CALIBRAÇÃO - ${equip.nome}`;
-      corpoMensagem = `*SERVMIL - ALERTA DE CALIBRAÇÃO*\n\n` +
+      corpoMensagem =
+        `*SERVMIL - ALERTA DE CALIBRAÇÃO*\n\n` +
         `🔬 *Equipamento:* ${equip.nome}\n` +
         `🏷️ *Patrimônio:* ${equip.tag_patrimonio}\n` +
         `⚙️ *Modelo:* ${equip.fabricante} ${equip.modelo}\n` +
@@ -1767,7 +2264,8 @@ app.post('/api/alertas/disparar-multiplo', (req, res) => {
         `Ação necessária: Agendar recalibração imediata com laboratório credenciado.`;
     } else {
       titulo = 'ALERTA GERAL DO SISTEMA';
-      corpoMensagem = mensagem_customizada || 'Alerta operacional disparado pelo gestor do Almoxarifado.';
+      corpoMensagem =
+        mensagem_customizada || 'Alerta operacional disparado pelo gestor do Almoxarifado.';
     }
 
     // Gera links universais do WhatsApp para cada um dos destinatários
@@ -1781,25 +2279,32 @@ app.post('/api/alertas/disparar-multiplo', (req, res) => {
         cargo: dest.cargo,
         telefone: dest.telefone_whatsapp,
         email: dest.email,
-        link_whatsapp: whatsappLink
+        link_whatsapp: whatsappLink,
       };
     });
 
     // Registra disparo no histórico
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO historico_alertas (tipo, origem_id, titulo, mensagem)
       VALUES (?, ?, ?, ?)
-    `).run(tipo || 'MANUAL', item_id || equipamento_id || null, titulo, corpoMensagem);
+    `
+    ).run(tipo || 'MANUAL', item_id || equipamento_id || null, titulo, corpoMensagem);
 
-    registrarLog('DISPARO_ALERTA', req.usuario.id, req.usuario.username,
-      `Disparou alerta ${tipo || 'MANUAL'} para ${disparos.length} destinatário(s): ${titulo}`, obterIp(req));
+    registrarLog(
+      'DISPARO_ALERTA',
+      req.usuario.id,
+      req.usuario.username,
+      `Disparou alerta ${tipo || 'MANUAL'} para ${disparos.length} destinatário(s): ${titulo}`,
+      obterIp(req)
+    );
 
     res.json({
       sucesso: true,
       titulo,
       mensagem: corpoMensagem,
       total_destinatarios: disparos.length,
-      destinatarios: disparos
+      destinatarios: disparos,
     });
   } catch (error) {
     res.status(500).json({ erro: 'Erro ao disparar alertas', detalhes: msgErroInterno(error) });
@@ -1810,8 +2315,12 @@ app.post('/api/alertas/disparar-multiplo', (req, res) => {
 // 100 mil linhas de auditoria e 50 mil alertas históricos.
 function podarRegistrosPesados() {
   try {
-    db.prepare('DELETE FROM logs_seguranca WHERE id NOT IN (SELECT id FROM logs_seguranca ORDER BY id DESC LIMIT 100000)').run();
-    db.prepare('DELETE FROM historico_alertas WHERE id NOT IN (SELECT id FROM historico_alertas ORDER BY id DESC LIMIT 50000)').run();
+    db.prepare(
+      'DELETE FROM logs_seguranca WHERE id NOT IN (SELECT id FROM logs_seguranca ORDER BY id DESC LIMIT 100000)'
+    ).run();
+    db.prepare(
+      'DELETE FROM historico_alertas WHERE id NOT IN (SELECT id FROM historico_alertas ORDER BY id DESC LIMIT 50000)'
+    ).run();
   } catch (e) {
     console.error('[Poda] Falha ao podar registros:', e.message);
   }
@@ -1828,4 +2337,3 @@ app.listen(PORT, '127.0.0.1', () => {
   console.log(`[Segurança] Porta restrita ao localhost + rate limit + headers ativos`);
   console.log(`====================================================`);
 });
-

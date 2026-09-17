@@ -5,6 +5,7 @@ Obrigado por considerar contribuir com o **ServMil Almoxarifado**! 🎉
 ## 🚀 Como Começar
 
 ### 1. Fork e Clone
+
 ```bash
 git fork https://github.com/VictorHugoEng/AlmoxarifadoProject.git
 git clone https://github.com/SEU_USUARIO/AlmoxarifadoProject.git
@@ -12,6 +13,7 @@ cd AlmoxarifadoProject
 ```
 
 ### 2. Configure o Ambiente
+
 ```bash
 npm ci
 cp .env.example .env  # se existir
@@ -19,6 +21,7 @@ npm run dev
 ```
 
 ### 3. Crie uma Branch
+
 ```bash
 git checkout -b feature/nome-da-feature
 # ou
@@ -38,19 +41,21 @@ Use mensagens claras e padronizadas:
 ```
 
 ### Tipos
-| Tipo | Descrição |
-|------|-----------|
-| `feat` | Nova funcionalidade |
-| `fix` | Correção de bug |
-| `docs` | Documentação |
-| `style` | Formatação (sem mudança de lógica) |
-| `refactor` | Refatoração de código |
-| `test` | Adição/correção de testes |
-| `chore` | Manutenção (deps, config, etc) |
-| `perf` | Melhoria de performance |
-| `security` | Correção de segurança |
+
+| Tipo       | Descrição                          |
+| ---------- | ---------------------------------- |
+| `feat`     | Nova funcionalidade                |
+| `fix`      | Correção de bug                    |
+| `docs`     | Documentação                       |
+| `style`    | Formatação (sem mudança de lógica) |
+| `refactor` | Refatoração de código              |
+| `test`     | Adição/correção de testes          |
+| `chore`    | Manutenção (deps, config, etc)     |
+| `perf`     | Melhoria de performance            |
+| `security` | Correção de segurança              |
 
 ### Exemplos
+
 ```
 feat(estoque): adiciona filtro por categoria na listagem
 
@@ -64,6 +69,7 @@ refactor(database): extrai migrações para módulo separado
 ## 🧪 Qualidade de Código
 
 ### Antes de Commitar
+
 ```bash
 npm run lint        # Verifica problemas
 npm run lint:fix    # Corrige automaticamente
@@ -72,13 +78,16 @@ npm run audit       # Verifica vulnerabilidades
 ```
 
 ### Husky (Git Hooks)
+
 O projeto usa Husky para rodar checks automaticamente:
+
 - `pre-commit`: lint + format
 - `commit-msg`: valida formato Conventional Commits
 
 ## 🔀 Pull Requests
 
 ### Checklist Obrigatório
+
 - [ ] Branch atualizada com `main` (`git rebase main`)
 - [ ] Commits seguem Conventional Commits
 - [ ] `npm run lint` passa sem erros
@@ -89,9 +98,11 @@ O projeto usa Husky para rodar checks automaticamente:
 - [ ] Sem secrets/keys no código
 
 ### Template de PR
+
 Use o template `.github/PULL_REQUEST_TEMPLATE.md` — preencha tudo.
 
 ### Review Process
+
 1. CI deve passar (GitHub Actions)
 2. Pelo menos 1 approval (quando houver team)
 3. Sem conflitos com `main`
@@ -100,6 +111,7 @@ Use o template `.github/PULL_REQUEST_TEMPLATE.md` — preencha tudo.
 ## 🏷️ Versionamento
 
 Usamos [Semantic Versioning](https://semver.org/):
+
 - `MAJOR`: Breaking changes
 - `MINOR`: Novas funcionalidades (backward compatible)
 - `PATCH`: Bug fixes (backward compatible)
@@ -110,6 +122,7 @@ Tags: `v1.0.0`, `v1.1.0`, `v1.1.1`
 
 Use o template **Bug Report** (`.github/ISSUE_TEMPLATE/bug_report.md`).
 Inclua:
+
 - Passos para reproduzir
 - Comportamento esperado vs atual
 - Ambiente (OS, Node, browser)
@@ -119,6 +132,7 @@ Inclua:
 
 Use o template **Feature Request** (`.github/ISSUE_TEMPLATE/feature_request.md`).
 Explique:
+
 - Problema que resolve
 - Solução proposta
 - Critérios de aceitação
@@ -136,6 +150,7 @@ Atualize a documentação relevante junto com o código.
 ## 🛡️ Segurança
 
 **NUNCA** commite:
+
 - Senhas, tokens, API keys
 - Arquivos `.env` reais
 - Certificados/keys privadas
@@ -155,7 +170,8 @@ Seja respeitoso, construtivo e inclusivo. Código de conduta: [Contributor Coven
 
 ## 🎓 Para Estudantes/Iniciantes
 
-**Não tenha medo de contribuir!** 
+**Não tenha medo de contribuir!**
+
 - Marque issues com `good first issue` ou `help wanted`
 - Pergunte nos comentários da issue
 - Peça review antecipado (WIP PR)

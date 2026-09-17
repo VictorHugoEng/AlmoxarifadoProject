@@ -93,7 +93,7 @@ function status() {
     ultimaSincronizacao,
     ultimoErro,
     arquivoDrive: NOME_ARQUIVO_DRIVE,
-    pastaDrive: NOME_PASTA_DRIVE
+    pastaDrive: NOME_PASTA_DRIVE,
   };
 }
 
@@ -109,7 +109,7 @@ function urlAutorizacao(redirectUri) {
     scope: ESCOPOS,
     access_type: 'offline',
     prompt: 'consent',
-    include_granted_scopes: 'true'
+    include_granted_scopes: 'true',
   });
   return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 }
@@ -124,15 +124,17 @@ async function trocarCodigoPorToken(code, redirectUri) {
       client_id: cfg.google_client_id,
       client_secret: cfg.google_client_secret,
       redirect_uri: redirectUri,
-      grant_type: 'authorization_code'
-    })
+      grant_type: 'authorization_code',
+    }),
   });
   const data = await res.json();
   if (!res.ok) {
     throw new Error(data.error_description || data.error || 'Falha ao obter autorização do Google');
   }
   if (!data.refresh_token) {
-    throw new Error('O Google não retornou refresh_token (aviso: o prompt de consentimento deve pedir novamente)');
+    throw new Error(
+      'O Google não retornou refresh_token (aviso: o prompt de consentimento deve pedir novamente)'
+    );
   }
   return data;
 }
@@ -153,8 +155,8 @@ async function obterTokenValido() {
       client_id: cfg.google_client_id,
       client_secret: cfg.google_client_secret,
       refresh_token: t.refresh_token,
-      grant_type: 'refresh_token'
-    })
+      grant_type: 'refresh_token',
+    }),
   });
   const data = await res.json();
   if (!res.ok) {
@@ -171,7 +173,7 @@ async function obterTokenValido() {
 async function buscarEmailConta(accessToken) {
   try {
     const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-      headers: { Authorization: `Bearer ${accessToken}` }
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
     const data = await res.json();
     return data.email || null;
@@ -188,7 +190,7 @@ async function pedidoDrive(url, opcoes = {}) {
   if (!token) throw new Error('Nuvem não conectada. Clique em Entrar na Nuvem.');
   const res = await fetch(url, {
     ...opcoes,
-    headers: { ...(opcoes.headers || {}), Authorization: `Bearer ${token}` }
+    headers: { ...(opcoes.headers || {}), Authorization: `Bearer ${token}` },
   });
   const dados = res.status === 204 ? null : await res.json().catch(() => null);
   if (!res.ok) {
@@ -209,15 +211,16 @@ async function garantirPasta() {
   const criado = await pedidoDrive('https://www.googleapis.com/drive/v3/files', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: NOME_PASTA_DRIVE, mimeType: 'application/vnd.google-apps.folder' })
+    body: JSON.stringify({
+      name: NOME_PASTA_DRIVE,
+      mimeType: 'application/vnd.google-apps.folder',
+    }),
   });
   return criado.id;
 }
 
 async function encontrarArquivoPorNome(folderId, nome) {
-  const q = encodeURIComponent(
-    `name='${nome}' and '${folderId}' in parents and trashed=false`
-  );
+  const q = encodeURIComponent(`name='${nome}' and '${folderId}' in parents and trashed=false`);
   const lista = await pedidoDrive(
     `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&pageSize=5`
   );
@@ -241,7 +244,7 @@ async function fazerUploadBytes(nome, bytes, mime = 'application/octet-stream') 
       {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': mime },
-        body: bytes
+        body: bytes,
       }
     );
     if (!res.ok) {
@@ -254,7 +257,7 @@ async function fazerUploadBytes(nome, bytes, mime = 'application/octet-stream') 
   const criado = await fetch('https://www.googleapis.com/drive/v3/files', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: nome, mimeType: mime, parents: [folderId] })
+    body: JSON.stringify({ name: nome, mimeType: mime, parents: [folderId] }),
   });
   const dados = await criado.json();
   if (!criado.ok) throw new Error(dados?.error?.message || `Google respondeu ${criado.status}`);
@@ -264,7 +267,7 @@ async function fazerUploadBytes(nome, bytes, mime = 'application/octet-stream') 
     {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': mime },
-      body: bytes
+      body: bytes,
     }
   );
   if (!envio.ok) {
@@ -281,7 +284,7 @@ async function baixarArquivoPorNome(nome) {
   if (!fileId) return null;
   const token = await obterTokenValido();
   const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-    headers: { Authorization: `Bearer ${token}` }
+    headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) {
     const err = await res.json().catch(() => null);
@@ -320,7 +323,11 @@ async function enviarPacoteAtualizacaoNuvem(zipBytes, versao) {
   }
   try {
     await fazerUploadBytes(NOME_ZIP_ATUALIZACAO, zipBytes);
-    await fazerUploadBytes(NOME_VERSAO_NUVEM, Buffer.from((versao || '').trim(), 'utf8'), 'text/plain');
+    await fazerUploadBytes(
+      NOME_VERSAO_NUVEM,
+      Buffer.from((versao || '').trim(), 'utf8'),
+      'text/plain'
+    );
     return { ok: true };
   } catch (e) {
     return { ok: false, erro: e.message };
@@ -360,9 +367,9 @@ async function enviarBackupNuvem() {
           method: 'PATCH',
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/octet-stream'
+            'Content-Type': 'application/octet-stream',
           },
-          body: bytes
+          body: bytes,
         }
       );
       if (!res.ok) {
@@ -376,13 +383,13 @@ async function enviarBackupNuvem() {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           name: NOME_ARQUIVO_DRIVE,
           mimeType: 'application/octet-stream',
-          parents: [folderId]
-        })
+          parents: [folderId],
+        }),
       });
       const dadosCriado = await criado.json();
       if (!criado.ok) {
@@ -394,9 +401,9 @@ async function enviarBackupNuvem() {
           method: 'PATCH',
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/octet-stream'
+            'Content-Type': 'application/octet-stream',
           },
-          body: bytes
+          body: bytes,
         }
       );
       if (!envio.ok) {
@@ -431,7 +438,7 @@ async function baixarBackupNuvem(opcoes = {}) {
 
     const token = await obterTokenValido();
     const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) {
       const err = await res.json().catch(() => null);
@@ -453,20 +460,31 @@ async function baixarBackupNuvem(opcoes = {}) {
       const principal = caminhoDoBanco();
       if (fs.existsSync(principal)) {
         try {
-          fs.copyFileSync(principal, path.join(PASTA_BACKUPS, `voltstock_PRE_RESTAURO_${stamp}.db`));
+          fs.copyFileSync(
+            principal,
+            path.join(PASTA_BACKUPS, `voltstock_PRE_RESTAURO_${stamp}.db`)
+          );
         } catch (e) {}
       }
       for (const suf of ['-wal', '-shm']) {
-        try { fs.unlinkSync(principal + suf); } catch (e) {}
+        try {
+          fs.unlinkSync(principal + suf);
+        } catch (e) {}
       }
       fs.writeFileSync(principal, buffer);
       try {
-        fs.appendFileSync(path.join(PASTA_BACKUPS, 'historico_backups.txt'),
-          `[${new Date().toLocaleString('pt-BR')}] RECUPERACAO DA NUVEM: banco restaurado de voltstock_live.db (Google Drive)\n`);
+        fs.appendFileSync(
+          path.join(PASTA_BACKUPS, 'historico_backups.txt'),
+          `[${new Date().toLocaleString('pt-BR')}] RECUPERACAO DA NUVEM: banco restaurado de voltstock_live.db (Google Drive)\n`
+        );
       } catch (e) {}
-      console.log(`[Nuvem] Backup APLICADO da nuvem no banco principal (${(buffer.length / 1024).toFixed(1)} KB) + cópia em backups/`);
+      console.log(
+        `[Nuvem] Backup APLICADO da nuvem no banco principal (${(buffer.length / 1024).toFixed(1)} KB) + cópia em backups/`
+      );
     } else {
-      console.log(`[Nuvem] Backup baixado da nuvem: ${path.basename(destino)} (${(buffer.length / 1024).toFixed(1)} KB)`);
+      console.log(
+        `[Nuvem] Backup baixado da nuvem: ${path.basename(destino)} (${(buffer.length / 1024).toFixed(1)} KB)`
+      );
     }
     return { ok: true, caminho: destino, aplicado: !!opcoes.aplicar };
   } catch (e) {
@@ -532,5 +550,5 @@ module.exports = {
   lerVersaoDaNuvem,
   baixarAtualizacaoNuvem,
   enviarPacoteAtualizacaoNuvem,
-  originDoRequest
+  originDoRequest,
 };
