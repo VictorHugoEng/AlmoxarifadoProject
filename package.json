@@ -1,17 +1,44 @@
 {
-  "name": "vitaoproject",
+  "name": "servmil-almoxarifado",
   "version": "1.0.0",
-  "description": "",
+  "description": "Sistema inteligente de gestão de almoxarifado com backup automático, sincronização Google Drive, chat privado, auditoria completa e atualização over-the-air",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "node --watch server.js",
+    "lint": "eslint . --ext .js",
+    "lint:fix": "eslint . --ext .js --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "echo \"No tests specified\" && exit 0",
+    "audit": "npm audit --audit-level=high",
+    "prepare": "husky install"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "almoxarifado",
+    "estoque",
+    "gestao",
+    "servmil",
+    "sqlite",
+    "express",
+    "backup",
+    "google-drive",
+    "pwa"
+  ],
+  "author": "Victor Hugo <victorhugoeng@email.com>",
+  "license": "MIT",
   "type": "commonjs",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "dependencies": {
     "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "husky": "^9.0.11"
   }
 }

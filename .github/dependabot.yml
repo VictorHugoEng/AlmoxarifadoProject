@@ -1,0 +1,56 @@
+version: 2
+updates:
+  # Dependências npm (produção + desenvolvimento)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "npm"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(dev-deps)"
+      include: "scope"
+    reviewers:
+      - "VictorHugoEng"
+    assignees:
+      - "VictorHugoEng"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    ignore:
+      # Ignora major updates do Express 5 (breaking changes)
+      - dependency-name: "express"
+        versions: ["5.x"]
+    groups:
+      dev-dependencies:
+        patterns:
+          - "eslint*"
+          - "prettier*"
+          - "husky*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(ci)"
+      include: "scope"
+    reviewers:
+      - "VictorHugoEng"

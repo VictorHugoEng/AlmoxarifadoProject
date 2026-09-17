@@ -1,0 +1,27 @@
+# CODEOWNERS
+# Estes usuários/bots são automaticamente solicitados para review
+# quando arquivos que eles "possuem" são modificados em PRs
+
+# Dono do repositório - review em tudo
+* @VictorHugoEng
+
+# Arquivos de configuração crítica
+/.github/ @VictorHugoEng
+/package.json @VictorHugoEng
+/package-lock.json @VictorHugoEng
+/.eslintrc.json @VictorHugoEng
+/.prettierrc @VictorHugoEng
+
+# Código core do sistema
+/server.js @VictorHugoEng
+/database.js @VictorHugoEng
+/nuvem.js @VictorHugoEng
+
+# Documentação
+/README.md @VictorHugoEng
+/CONTRIBUTING.md @VictorHugoEng
+/SECURITY.md @VictorHugoEng
+/docs/ @VictorHugoEng
+
+# Segurança e dependências
+/dependabot.yml @VictorHugoEng
