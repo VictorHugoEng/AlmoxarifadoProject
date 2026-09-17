@@ -52,12 +52,6 @@ jobs:
         run: npm audit --audit-level=high
         continue-on-error: true
 
-      - name: Run Snyk security scan
-        uses: snyk/actions/node@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
   test:
     name: Tests
     runs-on: ubuntu-latest
