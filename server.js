@@ -369,11 +369,9 @@ app.post(
             `Conta bloqueada após ${novasTentativas} tentativas falhas (${MINUTOS_BLOQUEIO} min)`,
             ip
           );
-          return res
-            .status(423)
-            .json({
-              erro: `Conta bloqueada após ${novasTentativas} tentativas falhas. Aguarde ${MINUTOS_BLOQUEIO} minutos.`,
-            });
+          return res.status(423).json({
+            erro: `Conta bloqueada após ${novasTentativas} tentativas falhas. Aguarde ${MINUTOS_BLOQUEIO} minutos.`,
+          });
         }
         db.prepare('UPDATE usuarios SET tentativas_falhas = ? WHERE id = ?').run(
           novasTentativas,
