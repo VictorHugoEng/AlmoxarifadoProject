@@ -13,7 +13,7 @@
 > *"Não sou apenas um estudante que aprende tecnologias — sou um engenheiro que constrói sistemas completos, do banco de dados à interface, do deploy à monitoração."*
 
 - 🎓 **Cursando Engenharia de Software** — foco em arquitetura, qualidade e boas práticas
-- 🏭 **Experiência real** — construí sistemas completos para ambiente industrial/militar (ServMil)
+- 🏭 **Experiência real** — construí sistemas completos para ambiente industrial/corporativo
 - 🧠 **Mentalidade Senior** — penso em escalabilidade, segurança, observabilidade e manutenibilidade desde o dia 1
 - 🚀 **Entrega ponta-a-ponta** — backend, frontend, DevOps, banco, CI/CD, documentação
 
@@ -48,9 +48,9 @@
 
 ---
 
-## 🏆 Projeto Destaque: **ServMil Almoxarifado**
+## 🏆 Projeto Destaque: **Almoxarifado Inteligente**
 
-> **Sistema completo de gestão de almoxarifado industrial** com padrões de qualidade militar
+> **Sistema completo de gestão de almoxarifado industrial** com padrões enterprise de qualidade
 
 [![Repo](https://img.shields.io/badge/Repo-VictorHugoEng/AlmoxarifadoProject-181717?style=for-the-badge&logo=github)](https://github.com/VictorHugoEng/AlmoxarifadoProject)
 

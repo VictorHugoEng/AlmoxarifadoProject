@@ -1,4 +1,4 @@
-# 🏭 ServMil Almoxarifado — Sistema Inteligente de Gestão de Estoque
+# 🏭 Almoxarifado Inteligente — Sistema Completo de Gestão de Estoque
 
 [![Node.js](https://img.shields.io/badge/Node.js-20.x-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Express](https://img.shields.io/badge/Express-5.x-000000?logo=express&logoColor=white)](https://expressjs.com/)
@@ -7,7 +7,7 @@
 [![Security](https://img.shields.io/badge/Security-Hardened-brightgreen)](SECURITY.md)
 [![CI](https://github.com/VictorHugoEng/AlmoxarifadoProject/actions/workflows/ci.yml/badge.svg)](https://github.com/VictorHugoEng/AlmoxarifadoProject/actions/workflows/ci.yml)
 
-> **Sistema completo de almoxarifado** com autenticação militar, backup automático, sincronização Google Drive, chat privado, auditoria completa e atualização over-the-air. Projetado para ambientes críticos onde **perda de dados não é opção**.
+> **Sistema completo de almoxarifado** com autenticação robusta, backup automático, sincronização Google Drive, chat privado, auditoria completa e atualização over-the-air. Projetado para ambientes críticos onde **perda de dados não é opção**.
 
 ---
 
@@ -15,9 +15,9 @@
 
 | Característica | Descrição |
 |----------------|-----------|
-| **Domínio** | Almoxarifado industrial / militar (ServMil) |
+| **Domínio** | Almoxarifado industrial / corporativo |
 | **Arquitetura** | Monolito modular Node.js + SQLite (WAL mode) |
-| **Autenticação** | JWT-like tokens 256-bit + scrypt + rate limiting + brute-force protection |
+| **Autenticação** | Tokens 256-bit + scrypt + rate limiting + brute-force protection |
 | **Autorização** | RBAC: `ADMIN_MASTER`, `OPERADOR`, `COMPRAS`, `CONSULTA` |
 | **Backup** | Local (30 dias) + Google Drive (contínuo) + auto-recovery |
 | **Tempo real** | Chat 1-a-1 com imagens no banco + notificações (sininho) |
@@ -269,7 +269,7 @@ AlmoxarifadoProject/
 ### PM2 (Recomendado VPS)
 ```bash
 npm install -g pm2
-pm2 start server.js --name servmil-almox
+pm2 start server.js --name almoxarifado
 pm2 startup
 pm2 save
 ```
@@ -286,21 +286,21 @@ CMD ["node", "server.js"]
 ```
 
 ```bash
-docker build -t servmil/almoxarifado .
-docker run -d -p 3000:3000 -v ./data:/app/data servmil/almoxarifado
+docker build -t almoxarifado .
+docker run -d -p 3000:3000 -v ./data:/app/data almoxarifado
 ```
 
 ### Systemd (Linux)
 ```ini
-# /etc/systemd/system/servmil.service
+# /etc/systemd/system/almoxarifado.service
 [Unit]
-Description=ServMil Almoxarifado
+Description=Almoxarifado Inteligente
 After=network.target
 
 [Service]
 Type=simple
-User=servmil
-WorkingDirectory=/opt/servmil
+User=almox
+WorkingDirectory=/opt/almoxarifado
 ExecStart=/usr/bin/node server.js
 Restart=on-failure
 Environment=NODE_ENV=production
@@ -337,7 +337,7 @@ MIT License - veja [LICENSE](LICENSE) para detalhes.
 
 ## 👨‍💻 Autor
 
-**Victor Hugo** — Engenheiro de Software Sênior
+**Victor Hugo** — Engenheiro de Software
 - GitHub: [@VictorHugoEng](https://github.com/VictorHugoEng)
 - LinkedIn: [victorhugoeng](https://linkedin.com/in/victorhugoeng)
 
@@ -352,5 +352,5 @@ MIT License - veja [LICENSE](LICENSE) para detalhes.
 
 ---
 
-> **Construído com padrão de qualidade militar para o ServMil.**  
+> **Construído com padrão enterprise para produção.**  
 > *Zero data loss. Zero downtime. Zero excuses.*
