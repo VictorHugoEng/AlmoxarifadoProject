@@ -1,0 +1,179 @@
+/* ============================================================
+   ALMOXARIFADO INTELIGENTE - SISTEMA DE ESTOQUE & GESTÃO DE CALIBRAÇÃO
+   DESIGN SYSTEM INDUSTRIAL: VERDE RAIO CHOQUE, CINZA E PRETO
+   ============================================================ */
+
+:root {
+  --volt-green: #00FF66;
+  --volt-green-glow: rgba(0, 255, 102, 0.4);
+  --volt-dark: #0A0D14;
+  --volt-surface: #121824;
+  --volt-border: #1E293B;
+  --volt-amber: #F59E0B;
+  --volt-red: #EF4444;
+}
+
+body {
+  background-color: var(--volt-dark);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================
+   SELETORES (DROPDOWNS): FUNDO PRETO + LETRAS BRANCAS LEGÍVEIS
+   ============================================================ */
+select {
+  color: #FFFFFF !important;
+  background-color: #000000 !important;
+}
+
+select option {
+  background-color: #000000 !important;
+  color: #E2E8F0 !important;
+}
+
+select:focus {
+  border-color: var(--volt-green);
+  outline: none;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0A0D14;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1E293B;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Efeito Glow / Choque Elétrico */
+.glow-volt {
+  box-shadow: 0 0 15px var(--volt-green-glow);
+}
+
+.glow-volt-border {
+  border-color: var(--volt-green);
+  box-shadow: 0 0 10px rgba(0, 255, 102, 0.25);
+}
+
+/* Animações de Pulso Industrial */
+@keyframes neon-pulse {
+  0%, 100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(0, 255, 102, 0.6));
+  }
+  50% {
+    opacity: 0.7;
+    filter: drop-shadow(0 0 2px rgba(0, 255, 102, 0.2));
+  }
+}
+
+.animate-neon {
+  animation: neon-pulse 2s infinite ease-in-out;
+}
+
+/* Transições Suaves */
+.kpi-card {
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: #334155;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+/* Botões de Ajuste Rápido (+1 / -1) */
+.btn-qty {
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-qty:active {
+  transform: scale(0.92);
+}
+
+/* Tabela Hover */
+tr.table-row-item {
+  transition: background-color 0.15s ease;
+}
+
+tr.table-row-item:hover {
+  background-color: rgba(30, 41, 59, 0.35);
+}
+
+/* Indicador de Alerta Vermelho Pulsante para Estoque <= 20 */
+.badge-critico-animado {
+  animation: critico-flash 1.8s infinite;
+}
+
+@keyframes critico-flash {
+  0%, 100% {
+    background-color: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.6);
+  }
+  50% {
+    background-color: rgba(239, 68, 68, 0.05);
+    border-color: rgba(239, 68, 68, 0.2);
+  }
+}
+
+/* Toast Container */
+.toast-item {
+  animation: slide-in 0.3s ease-out forwards;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ============================================================
+   PADRÃO ÚNICO DE DIMENSIONAMENTO (SEM PRECISAR DAR ZOOM)
+   ============================================================ */
+/* Garante que nada empurre a página para os lados em qualquer tela */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* Imagens/mídia nunca ultrapassam o bloco onde estão */
+img,
+video,
+svg {
+  max-width: 100%;
+}
+
+/* Modais e boxes sempre cabem na largura da tela */
+.fixed.inset-0 {
+  overflow-y: auto;
+}
+
+/* Conteúdo dentro de flex nunca força largura maior que a tela */
+.flex {
+  min-width: 0;
+}
+
+/* Uniformiza o corte de textos longos sem estourar o layout */
+tr,
+td,
+th {
+  word-break: break-word;
+}
+

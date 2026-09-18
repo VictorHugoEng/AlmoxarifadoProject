@@ -1,6 +1,6 @@
 # Guia de Contribuição
 
-Obrigado por considerar contribuir com o **ServMil Almoxarifado**! 🎉
+Obrigado por considerar contribuir com o **Almoxarifado Inteligente**! 🎉
 
 ## 🚀 Como Começar
 

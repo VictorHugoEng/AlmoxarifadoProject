@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Almoxarifado Inteligente // Gestão de Estoque & Calibração</title>
+  
+  <!-- Tailwind CSS via CDN para estilização ultra rápida e consistente -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Fontes Google Inter e JetBrains Mono (para visual técnico/industrial) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Folha de estilo customizada para efeitos Neon / Raio Choque -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- PWA: instalável como aplicativo (celular e PC) -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="theme-color" content="#0B111E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body class="bg-[#0A0D14] text-[#E2E8F0] font-sans min-h-screen flex flex-col selection:bg-[#00FF66] selection:text-black overflow-x-hidden">
+
+  <!-- ========================================== -->
+  <!-- HEADER INDUSTRIAL PRINCIPAL                -->
+  <!-- ========================================== -->
+  <header class="border-b border-[#1E293B] bg-[#0E131F]/90 backdrop-blur-md sticky top-0 z-40 px-5 py-3 shadow-xl">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row flex-wrap items-center justify-between gap-2">
+      
+      <!-- Logomarca com Raio Verde Elétrico -->
+      <div class="flex items-center gap-3 order-1">
+        <div class="w-10 h-10 rounded-xl bg-black border border-[#00FF66]/40 flex items-center justify-center shadow-[0_0_15px_rgba(0,255,102,0.3)]">
+          <svg class="w-5 h-5 text-[#00FF66] animate-pulse" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg font-extrabold tracking-wider text-white font-mono">SERV<span class="text-[#00FF66]">MIL</span></h1>
+            <span class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase rounded bg-[#00FF66]/10 text-[#00FF66] border border-[#00FF66]/30">ALMOXARIFADO</span>
+          </div>
+          <p class="text-[11px] text-[#94A3B8] font-mono">Controle de Estoque & Gestão de Calibração <span id="chip-versao" class="text-[#38BDF8]">· v—</span></p>
+        </div>
+      </div>
+
+      <!-- Navegação por Abas -->
+      <nav class="order-3 w-full flex flex-wrap items-center gap-1 bg-[#131926] p-1.5 rounded-xl border border-[#1E293B]">
+        <button onclick="trocarAba('dashboard')" id="tab-dashboard" class="tab-btn px-4 py-2 text-[13px] font-semibold rounded-lg transition-all flex items-center gap-2 bg-[#00FF66] text-black shadow-[0_0_10px_rgba(0,255,102,0.4)]">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+          Dashboard
+        </button>
+        <button onclick="trocarAba('estoque')" id="tab-estoque" class="tab-btn px-4 py-2 text-[13px] font-semibold rounded-lg transition-all flex items-center gap-2 text-[#94A3B8] hover:text-white">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          Almoxarifado
+          <span id="badge-estoque-critico" class="hidden px-1.5 py-0.2 text-[10px] bg-red-500/20 text-red-400 border border-red-500/40 rounded-full font-mono">0</span>
+        </button>
+        <button onclick="trocarAba('calibracao')" id="tab-calibracao" class="tab-btn px-4 py-2 text-[13px] font-semibold rounded-lg transition-all flex items-center gap-2 text-[#94A3B8] hover:text-white">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          Calibração
+          <span id="badge-calib-critico" class="hidden px-1.5 py-0.2 text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded-full font-mono">0</span>
+        </button>
+        <button onclick="trocarAba('compras')" id="tab-compras" class="tab-btn px-4 py-2 text-[13px] font-semibold rounded-lg transition-all flex items-center gap-2 text-[#94A3B8] hover:text-white">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+          Compras
+        </button>
+        <button onclick="trocarAba('destinatarios')" id="tab-destinatarios" class="tab-btn px-4 py-2 text-[13px] font-semibold rounded-lg transition-all flex items-center gap-2 text-[#94A3B8] hover:text-white">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          Destinatários (7)
+        </button>
+        <button onclick="trocarAba('chat')" id="tab-chat" class="tab-btn px-4 py-2 text-[13px] font-semibold rounded-lg transition-all flex items-center gap-2 text-[#94A3B8] hover:text-white">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+          Chat
+          <span id="badge-chat-naolido" class="hidden px-1.5 py-0.2 text-[10px] bg-[#38BDF8]/20 text-[#38BDF8] border border-[#38BDF8]/40 rounded-full font-mono">0</span>
+        </button>
+        <button onclick="trocarAba('administrador')" id="tab-administrador" class="hidden tab-btn px-3 py-1.5 text-[11px] font-semibold rounded-lg transition-all flex items-center gap-2 text-[#F59E0B] hover:text-white">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          ADMINISTRADOR
+        </button>
+      </nav>
+
+      <!-- Status de Conexão e Controle de Sessão -->
+      <div class="flex items-center gap-2 order-2">
+        <button onclick="tocarAlarmeSonoro()" title="Testar Sinalizador Acústico" class="p-2 rounded-lg bg-[#161D2B] border border-[#1E293B] text-[#94A3B8] hover:text-[#00FF66] transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+        </button>
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/50 border border-[#1E293B] text-xs font-mono">
+          <span class="w-2 h-2 rounded-full bg-[#00FF66] animate-ping"></span>
+          <span class="text-white">SISTEMA ATIVO</span>
+        </div>
+
+        <!-- Relógio de Brasília ao vivo -->
+        <div class="hidden sm:flex flex-col items-end px-3 py-1.5 rounded-lg bg-black/50 border border-[#1E293B]">
+          <span id="relogio-hora" class="text-base font-bold text-[#00FF66] font-mono leading-none">--:--:--</span>
+          <span id="relogio-data" class="text-[9px] text-[#94A3B8] font-mono uppercase mt-1">Brasília</span>
+        </div>
+        <div id="area-identidade" class="hidden flex-col items-end">
+          <span id="header-usuario-nome" class="text-[11px] font-bold text-white font-mono"></span>
+          <span id="header-usuario-role" class="text-[9px] text-[#00FF66] font-mono uppercase tracking-wider"></span>
+        </div>
+
+        <!-- Sininho de Notificações (alterações gerais) -->
+        <div class="relative">
+          <button onclick="alternarPainelNotificacoes()" title="Notificações do sistema" class="relative p-2 rounded-lg bg-[#161D2B] border border-[#1E293B] text-[#94A3B8] hover:text-[#38BDF8] hover:border-[#38BDF8]/50 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            <span id="badge-sininho" class="hidden absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold font-mono flex items-center justify-center">0</span>
+          </button>
+          <!-- Painel dropdown -->
+          <div id="painel-notificacoes" class="hidden absolute right-0 top-11 w-80 max-w-[90vw] bg-[#121824] border border-[#1E293B] rounded-2xl shadow-2xl z-50 overflow-hidden">
+            <div class="bg-[#0E131F] border-b border-[#1E293B] px-4 py-3 flex items-center justify-between">
+              <h5 class="text-xs font-bold text-white font-mono flex items-center gap-2">
+                <svg class="w-3.5 h-3.5 text-[#38BDF8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                NOTIFICAÇÕES DO SISTEMA
+              </h5>
+              <span id="painel-notif-contador" class="text-[10px] text-[#38BDF8] font-mono"></span>
+            </div>
+            <div id="painel-notif-lista" class="max-h-96 overflow-y-auto divide-y divide-[#1E293B]/50">
+              <!-- Renderizado dinamicamente -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Balão de Mensagens Privadas -->
+        <button onclick="abrirChatDaNotificacao()" title="Mensagens privadas" class="relative p-2 rounded-lg bg-[#161D2B] border border-[#1E293B] text-[#94A3B8] hover:text-[#00FF66] hover:border-[#00FF66]/50 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+          <span id="badge-balao-msg" class="hidden absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#00FF66] text-black text-[10px] font-bold font-mono flex items-center justify-center">0</span>
+        </button>
+
+        <button onclick="sairDoSistema()" title="Encerrar sessão com segurança" class="p-2 rounded-lg bg-[#161D2B] border border-red-500/40 text-[#94A3B8] hover:text-red-400 hover:border-red-500/80 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- CONTEÚDO PRINCIPAL (RENDERIZADO POR ABA)   -->
+  <!-- ========================================== -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+
+    <!-- ========================================== -->
+    <!-- ABA 1: DASHBOARD GERAL                     -->
+    <!-- ========================================== -->
+    <section id="view-dashboard" class="space-y-6">
+      
+      <!-- Cards de Métricas Principais (3 Indicadores Focados) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+        <!-- Estoque Crítico (<= 20 unidades) -->
+        <div class="kpi-card bg-[#121824] p-5 rounded-2xl border border-[#1E293B] relative overflow-hidden">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-xs font-mono uppercase text-[#94A3B8]">Estoque Crítico (≤ 20 un)</p>
+              <h3 id="kpi-estoque-critico" class="text-3xl font-extrabold text-red-400 font-mono mt-2">--</h3>
+              <p class="text-xs text-red-400/80 mt-1">Parafusos e insumos para reposição</p>
+            </div>
+            <div class="p-2.5 rounded-xl bg-red-500/10 text-red-400 border border-red-500/30 animate-pulse">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 h-1 bg-red-500"></div>
+        </div>
+
+        <!-- Calibração Vencendo em 15 dias -->
+        <div class="kpi-card bg-[#121824] p-5 rounded-2xl border border-[#1E293B] relative overflow-hidden">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-xs font-mono uppercase text-[#94A3B8]">Calibração &lt; 15 Dias</p>
+              <h3 id="kpi-calibracao-alerta" class="text-3xl font-extrabold text-amber-400 font-mono mt-2">--</h3>
+              <p class="text-xs text-amber-400/80 mt-1">Aferição urgente em até 15 dias</p>
+            </div>
+            <div class="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 h-1 bg-amber-400"></div>
+        </div>
+
+        <!-- Solicitações de Compras Pendentes -->
+        <div class="kpi-card bg-[#121824] p-5 rounded-2xl border border-[#1E293B] relative overflow-hidden">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-xs font-mono uppercase text-[#94A3B8]">Compras Pendentes</p>
+              <h3 id="kpi-compras-pendentes" class="text-3xl font-extrabold text-[#38BDF8] font-mono mt-2">--</h3>
+              <p class="text-xs text-[#38BDF8]/80 mt-1">Aguardando cotação ou liberação</p>
+            </div>
+            <div class="p-2.5 rounded-xl bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            </div>
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 h-1 bg-[#38BDF8]"></div>
+        </div>
+
+      </div>
+
+      <!-- Banner de Ação Rápida de Emergência -->
+      <div id="banner-alerta-urgente" class="hidden bg-gradient-to-r from-red-950/60 via-[#18121E] to-[#121824] border border-red-500/40 rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 shadow-[0_0_20px_rgba(239,68,68,0.2)]">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-red-500/20 border border-red-500/50 flex items-center justify-center text-red-400">
+            <svg class="w-7 h-7 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-white flex items-center gap-2">
+              <span>ITENS CRÍTICOS IDENTIFICADOS NO ALMOXARIFADO</span>
+              <span class="px-2 py-0.5 text-[10px] bg-red-500 text-black font-extrabold font-mono rounded">LIMITE ≤ 20</span>
+            </h4>
+            <p id="texto-resumo-banner" class="text-xs text-[#94A3B8] mt-0.5">Existem itens abaixo do estoque de segurança aguardando emissão de pedido de compras.</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 flex-wrap justify-center">
+          <button onclick="trocarAba('estoque', true)" class="px-4 py-2.5 bg-red-500 hover:bg-red-400 text-black font-bold text-xs rounded-xl transition-all shadow-[0_0_15px_rgba(239,68,68,0.4)]">
+            VER ITENS CRÍTICOS
+          </button>
+          <button onclick="abrirModalDisparoMultiplo('ESTOQUE_BAIXO')" class="px-4 py-2.5 bg-[#161D2B] hover:bg-[#1E293B] text-white border border-[#334155] font-semibold text-xs rounded-xl transition-all flex items-center gap-2">
+            <svg class="w-4 h-4 text-[#00FF66]" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+            AVISAR TODOS RESPONSÁVEIS
+          </button>
+        </div>
+      </div>
+
+      <!-- Resumo Duplo: Estoque Crítico vs Calibrações Próximas -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Bloco: Últimos Itens com Estoque Baixo -->
+        <div class="bg-[#121824] rounded-2xl border border-[#1E293B] p-5 space-y-4">
+          <div class="flex justify-between items-center pb-3 border-b border-[#1E293B]">
+            <h4 class="text-sm font-bold text-white flex items-center gap-2 font-mono">
+              <span class="w-2 h-2 rounded-full bg-red-500"></span>
+              ESTOQUE EM NÍVEL CRÍTICO (≤ 20)
+            </h4>
+            <button onclick="trocarAba('estoque')" class="text-xs text-[#00FF66] hover:underline font-mono">Ver todos &rarr;</button>
+          </div>
+          <div id="lista-dashboard-estoque" class="space-y-2.5">
+            <!-- Injetado via JS -->
+          </div>
+        </div>
+
+        <!-- Bloco: Instrumentos Elétricos com Calibração a Vencer -->
+        <div class="bg-[#121824] rounded-2xl border border-[#1E293B] p-5 space-y-4">
+          <div class="flex justify-between items-center pb-3 border-b border-[#1E293B]">
+            <h4 class="text-sm font-bold text-white flex items-center gap-2 font-mono">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+              EQUIPAMENTOS: CALIBRAÇÃO EM ATENÇÃO (≤ 15 DIAS)
+            </h4>
+            <button onclick="trocarAba('calibracao')" class="text-xs text-[#00FF66] hover:underline font-mono">Ver todos &rarr;</button>
+          </div>
+          <div id="lista-dashboard-calibracao" class="space-y-2.5">
+            <!-- Injetado via JS -->
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- ABA 2: ALMOXARIFADO & ESTOQUE              -->
+    <!-- ========================================== -->
+    <section id="view-estoque" class="hidden space-y-6">
+      
+      <!-- Controles de Busca e Ação -->
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-[#121824] p-4 rounded-2xl border border-[#1E293B]">
+        
+        <div class="flex flex-1 items-center gap-3 w-full md:w-auto">
+          <!-- Campo de Busca -->
+          <div class="relative flex-1">
+            <input type="text" id="filtro-busca-estoque" oninput="carregarEstoque()" placeholder="Buscar parafuso, ID / Código, gaveta..." class="w-full bg-black/40 border border-[#1E293B] rounded-xl px-4 py-2.5 pl-10 text-xs font-mono text-white placeholder-[#64748B] focus:border-[#00FF66] focus:outline-none focus:ring-1 focus:ring-[#00FF66]">
+            <svg class="w-4 h-4 text-[#64748B] absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </div>
+
+          <!-- Filtro por Categoria -->
+          <select id="filtro-categoria-estoque" onchange="carregarEstoque()" class="bg-black/40 border border-[#1E293B] rounded-xl px-3 py-2.5 text-xs font-mono text-[#94A3B8] focus:border-[#00FF66] focus:outline-none">
+            <option value="TODAS">Todas as Categorias</option>
+            <option value="Parafusos e Fixadores">Parafusos e Fixadores</option>
+            <option value="Suportes e Fixação">Suportes e Fixação</option>
+            <option value="Infraestrutura">Infraestrutura e Eletrodutos</option>
+            <option value="Disjuntores e Proteção">Disjuntores e Proteção</option>
+            <option value="Cabos e Fios">Cabos e Fios</option>
+            <option value="Terminais e Conectores">Terminais e Conectores</option>
+            <option value="Insumos e Fitas">Insumos e Fitas</option>
+            <option value="EPI e Segurança">EPI e Segurança</option>
+          </select>
+
+          <!-- Botão de Gerenciar Categorias -->
+          <button onclick="abrirGestaoCategorias()" class="px-2.5 py-2.5 rounded-xl border border-[#1E293B] bg-black/40 text-[#00FF66] hover:bg-[#00FF66]/10 hover:text-[#00FF66] transition-colors flex items-center gap-1 whitespace-nowrap" title="Gerenciar / adicionar categorias">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14M5 12h14"/></svg>
+          </button>
+
+          <!-- Toggle: Apenas Críticos -->
+          <button id="btn-filtro-criticos" onclick="alternarFiltroCriticos()" class="px-3 py-2.5 rounded-xl border border-[#1E293B] bg-black/40 text-xs font-mono text-[#94A3B8] hover:text-white transition-colors flex items-center gap-1.5 whitespace-nowrap">
+            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+            Apenas Críticos (≤ 20)
+          </button>
+        </div>
+
+        <!-- Botão Novo Item -->
+        <button onclick="abrirModalNovoItem()" class="w-full md:w-auto px-4 py-2.5 bg-[#00FF66] hover:bg-[#00E65B] text-black font-bold text-xs font-mono rounded-xl transition-all shadow-[0_0_15px_rgba(0,255,102,0.3)] flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          ADICIONAR ITEM AO ESTOQUE
+                </button>
+
+        <!-- Botão Exportar em Planilha -->
+        <button onclick="exportarEstoqueCSV()" class="w-full md:w-auto px-4 py-2.5 border border-[#1E293B] bg-black/40 hover:bg-[#00FF66]/10 text-white hover:text-[#00FF66] font-bold text-xs font-mono rounded-xl transition-all flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          EXPORTAR PLANILHA
+        </button>
+
+      </div>
+
+      <!-- Tabela Industrial de Estoque -->
+      <div class="bg-[#121824] rounded-2xl border border-[#1E293B] overflow-hidden shadow-2xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-[#0E131F] border-b border-[#1E293B] text-[11px] font-mono text-[#94A3B8] uppercase tracking-wider">
+                <th class="py-3.5 px-4">ID / Código</th>
+                <th class="py-3.5 px-4">Descrição do Material</th>
+                <th class="py-3.5 px-4">Categoria</th>
+                <th class="py-3.5 px-4">Localização</th>
+                <th class="py-3.5 px-4 text-center">Saldo Físico</th>
+                <th class="py-3.5 px-4 text-center">Ajuste Rápido</th>
+                <th class="py-3.5 px-4 text-center">Status</th>
+                <th class="py-3.5 px-4 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-estoque-body" class="divide-y divide-[#1E293B]/60 text-xs">
+              <!-- Renderizado dinamicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- ABA 3: EQUIPAMENTOS & CALIBRAÇÃO           -->
+    <!-- ========================================== -->
+    <section id="view-calibracao" class="hidden space-y-6">
+      
+      <!-- Controles de Calibração -->
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-[#121824] p-4 rounded-2xl border border-[#1E293B]">
+        <div>
+          <h3 class="text-sm font-bold text-white font-mono flex items-center gap-2">
+            <svg class="w-5 h-5 text-[#00FF66]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            CONTROLE DE METROLOGIA & INSTRUMENTOS
+          </h3>
+          <p class="text-xs text-[#94A3B8]">Alertas automáticos para equipamentos com calibração a vencer em até 30 dias (1 mês).</p>
+        </div>
+
+        <button onclick="abrirModalNovoEquipamento()" class="px-4 py-2.5 bg-[#00FF66] hover:bg-[#00E65B] text-black font-bold text-xs font-mono rounded-xl transition-all shadow-[0_0_15px_rgba(0,255,102,0.3)] flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          CADASTRAR EQUIPAMENTO
+        </button>
+
+        <button onclick="exportarCalibracaoCSV()" class="px-4 py-2.5 border border-[#1E293B] bg-black/40 hover:bg-[#00FF66]/10 text-white hover:text-[#00FF66] font-bold text-xs font-mono rounded-xl transition-all flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          EXPORTAR PLANILHA
+        </button>
+      </div>
+
+      <!-- Tabela de Equipamentos -->
+      <div class="bg-[#121824] rounded-2xl border border-[#1E293B] overflow-hidden shadow-2xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-[#0E131F] border-b border-[#1E293B] text-[11px] font-mono text-[#94A3B8] uppercase tracking-wider">
+                <th class="py-3.5 px-4">Patrimônio (TAG)</th>
+                <th class="py-3.5 px-4">Equipamento / Modelo</th>
+                <th class="py-3.5 px-4">Nº Série</th>
+                <th class="py-3.5 px-4">Última Aferição</th>
+                <th class="py-3.5 px-4">Validade Limite</th>
+                <th class="py-3.5 px-4 text-center">Dias Restantes</th>
+                <th class="py-3.5 px-4 text-center">Status Calibração</th>
+                <th class="py-3.5 px-4 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-equipamentos-body" class="divide-y divide-[#1E293B]/60 text-xs">
+              <!-- Renderizado dinamicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- ABA 4: COMPRAS & SOLICITAÇÕES              -->
+    <!-- ========================================== -->
+    <section id="view-compras" class="hidden space-y-6">
+      
+      <div class="bg-[#121824] p-4 rounded-2xl border border-[#1E293B] flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-bold text-white font-mono flex items-center gap-2">
+            <svg class="w-5 h-5 text-[#38BDF8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            HISTÓRICO DE SOLICITAÇÕES DE COMPRAS
+          </h3>
+          <p class="text-xs text-[#94A3B8]">Pedidos disparados pelo almoxarifado para reposição de parafusos e componentes.</p>
+        </div>
+        <button onclick="exportarComprasCSV()" class="px-4 py-2.5 border border-[#1E293B] bg-black/40 hover:bg-[#38BDF8]/10 text-white hover:text-[#38BDF8] font-bold text-xs font-mono rounded-xl transition-all flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          EXPORTAR PLANILHA
+        </button>
+      </div>
+
+      <div class="bg-[#121824] rounded-2xl border border-[#1E293B] overflow-hidden shadow-2xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-[#0E131F] border-b border-[#1E293B] text-[11px] font-mono text-[#94A3B8] uppercase tracking-wider">
+                <th class="py-3.5 px-4">ID Pedido</th>
+                <th class="py-3.5 px-4">Item Solicitado</th>
+                <th class="py-3.5 px-4 text-center">Saldo na Época</th>
+                <th class="py-3.5 px-4 text-center">Qtd Solicitada</th>
+                <th class="py-3.5 px-4">Urgência</th>
+                <th class="py-3.5 px-4">Data / Hora</th>
+                <th class="py-3.5 px-4 text-center">Status</th>
+                <th class="py-3.5 px-4 text-right">Ação</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-compras-body" class="divide-y divide-[#1E293B]/60 text-xs">
+              <!-- Renderizado dinamicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Painel de Observações de Todos os Setores (visível a todos) -->
+      <div class="bg-[#121824] rounded-2xl border border-[#1E293B] overflow-hidden shadow-2xl">
+        <div class="bg-[#0E131F] border-b border-[#1E293B] px-5 py-3 flex items-center justify-between">
+          <h4 class="text-xs font-bold text-white font-mono flex items-center gap-2">
+            <svg class="w-4 h-4 text-[#38BDF8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+            OBSERVAÇÕES DE TODOS OS SETORES
+          </h4>
+          <span class="text-[10px] text-[#64748B] font-mono">TODOS PODEM ESCREVER E APAGAR</span>
+        </div>
+        <div id="painel-observacoes" class="max-h-[500px] overflow-y-auto">
+
+        <!-- Legenda de Status -->
+        <div class="flex items-center justify-between flex-wrap gap-2 px-4 py-2.5 bg-[#0E131F]/80 border-b border-[#1E293B]">
+          <span class="text-[10px] font-mono text-[#94A3B8] uppercase tracking-wider">Status — clique na bolinha para alterar</span>
+          <div class="flex items-center gap-4 text-[10px] font-mono">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> Em Aberto</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Aguardando</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#00FF66]"></span> Resolvido</span>
+          </div>
+        </div>
+        <!-- Formulário: qualquer funcionário pode escrever -->
+        <form id="form-nova-observacao" onsubmit="publicarObservacao(event)" class="p-4 bg-[#0E131F]/60 border-b border-[#1E293B] space-y-2.5">
+          <div>
+            <label class="block text-[11px] font-mono text-[#94A3B8] mb-1">Nome:</label>
+            <input type="text" id="obs-nome" placeholder="Seu nome completo" autocomplete="name" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-xs font-mono text-white placeholder-[#64748B] focus:border-[#38BDF8] focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[11px] font-mono text-[#94A3B8] mb-1">Setor:</label>
+            <input type="text" id="obs-setor" placeholder="Ex: Manutenção Elétrica" value="Almoxarifado Inteligente" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-xs font-mono text-white placeholder-[#64748B] focus:border-[#38BDF8] focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[11px] font-mono text-[#94A3B8] mb-1">Observação:</label>
+            <textarea id="obs-texto" required rows="2" placeholder="Escreva aqui a observação do seu setor para todos verem..." class="w-full bg-black/50 border border-[#1E293B] rounded-xl p-3 text-xs font-mono text-white placeholder-[#64748B] focus:border-[#38BDF8] focus:outline-none resize-y"></textarea>
+          </div>
+          <button type="submit" class="w-full px-4 py-2 bg-[#38BDF8] hover:bg-[#0EA5E9] text-black font-bold text-xs font-mono rounded-xl flex items-center justify-center gap-2">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            ESCREVER / PUBLICAR
+          </button>
+        </form>
+        <div id="lista-observacoes" class="divide-y divide-[#1E293B]/60">
+          <!-- Renderizado dinamicamente -->
+        </div>
+      </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- ABA 5: DESTINATÁRIOS DE ALERTA (OS 4)      -->
+    <!-- ========================================== -->
+    <section id="view-destinatarios" class="hidden space-y-6">
+      
+      <div class="bg-[#121824] p-5 rounded-2xl border border-[#1E293B] flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <h3 class="text-base font-bold text-white font-mono flex items-center gap-2">
+            <svg class="w-5 h-5 text-[#00FF66]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            OS 7 DESTINATÁRIOS DE NOTIFICAÇÃO SIMULTÂNEA
+          </h3>
+          <p class="text-xs text-[#94A3B8] mt-1">Configure os 7 contatos que recebem os avisos imediatos de estoque baixo e vencimento de calibração via WhatsApp e E-mail.</p>
+        </div>
+
+        <button onclick="testarDisparo4Destinatarios()" class="px-4 py-2.5 bg-[#00FF66]/10 hover:bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]/40 font-bold text-xs font-mono rounded-xl transition-all flex items-center gap-2">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          TESTAR DISPARO DE TESTE
+        </button>
+      </div>
+
+      <!-- Grid dos 4 Cards de Destinatários -->
+      <div id="grid-destinatarios" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Injetado dinamicamente -->
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- ABA 6: CHAT PRIVADO (1-A-1)                -->
+    <!-- ========================================== -->
+    <section id="view-chat" class="hidden">
+      <div class="bg-[#121824] rounded-2xl border border-[#1E293B] overflow-hidden shadow-2xl">
+        <div class="bg-[#0E131F] border-b border-[#1E293B] px-5 py-3 flex items-center justify-between">
+          <h4 class="text-xs font-bold text-white font-mono flex items-center gap-2">
+            <svg class="w-4 h-4 text-[#38BDF8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+            CHAT PRIVADO ENTRE USUÁRIOS
+          </h4>
+          <span class="text-[10px] text-[#64748B] font-mono">CONVERSAS 1-A-1 · ATUALIZA SOZINHO</span>
+        </div>
+
+        <div class="flex flex-col md:flex-row h-[560px]" id="chat-layout">
+          <!-- Lista de Contatos -->
+          <div id="chat-contatos" class="w-full md:w-72 shrink-0 border-r border-[#1E293B]/60 bg-[#0E131F]/40 md:flex md:flex-col">
+            <div class="p-3 border-b border-[#1E293B]/60">
+              <input type="text" id="chat-busca" oninput="carregarChat()" placeholder="Buscar funcionário..." class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-xs font-mono text-white placeholder-[#64748B] focus:border-[#38BDF8] focus:outline-none">
+            </div>
+            <div id="chat-lista-contatos" class="overflow-y-auto flex-1 divide-y divide-[#1E293B]/40">
+              <!-- Renderizado dinamicamente -->
+              <p class="text-xs text-[#64748B] font-mono py-8 text-center">Carregando contatos...</p>
+            </div>
+          </div>
+
+          <!-- Conversa -->
+          <div id="chat-conversa" class="flex-1 flex flex-col bg-black/20">
+            <div id="chat-cabecalho" class="hidden items-center gap-3 px-4 py-3 border-b border-[#1E293B]/60 bg-[#0E131F]/60">
+              <div id="chat-contato-avatar" class="w-9 h-9 rounded-full bg-[#38BDF8]/20 text-[#38BDF8] border border-[#38BDF8]/40 flex items-center justify-center text-sm font-bold font-mono"></div>
+              <div class="flex-1 min-w-0">
+                <p id="chat-contato-nome" class="text-xs font-bold text-white font-mono truncate"></p>
+                <p id="chat-contato-cargo" class="text-[10px] text-[#64748B] font-mono truncate"></p>
+              </div>
+              <span class="text-[10px] text-[#00FF66] font-mono flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#00FF66] animate-ping"></span>ONLINE NO SISTEMA</span>
+            </div>
+
+            <div id="chat-mensagens" class="flex-1 overflow-y-auto p-4 space-y-3">
+              <div class="h-full flex items-center justify-center">
+                <p class="text-xs text-[#64748B] font-mono text-center">Selecione um funcionário ao lado para iniciar a conversa.<br>Todas as mensagens e fotos ficam salvas no sistema.</p>
+              </div>
+            </div>
+
+            <form id="chat-form-envio" onsubmit="enviarMensagem(event)" class="hidden p-3 border-t border-[#1E293B]/60 bg-[#0E131F]/60">
+              <div id="chat-imagem-preview" class="hidden mb-2"></div>
+              <div class="flex items-center gap-2">
+                <input type="file" id="chat-imagem-input" accept="image/*" class="hidden" onchange="selecionarImagemChat(event)">
+                <button type="button" onclick="document.getElementById('chat-imagem-input').click()" title="Enviar foto" class="w-10 h-10 shrink-0 rounded-xl bg-[#1E293B] hover:bg-[#2A3A52] border border-[#334155] text-[#38BDF8] flex items-center justify-center transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </button>
+                <input type="text" id="chat-mensagem-input" autocomplete="off" maxlength="1000" placeholder="Escreva sua mensagem... (foto opcional)" class="flex-1 bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2.5 text-xs font-mono text-white placeholder-[#64748B] focus:border-[#38BDF8] focus:outline-none">
+                <button type="submit" class="px-4 py-2.5 bg-[#38BDF8] hover:bg-[#0EA5E9] text-black font-bold text-xs font-mono rounded-xl flex items-center gap-2 transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                  ENVIAR
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- ABA 7: ADMINISTRADOR - CONTROLE GERAL       -->
+    <!-- ========================================== -->
+    <section id="view-administrador" class="hidden space-y-6">
+      <div class="bg-[#121824] p-4 rounded-2xl border border-[#1E293B] flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <h3 class="text-sm font-bold text-white font-mono flex items-center gap-2">
+            <svg class="w-5 h-5 text-[#F59E0B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            CONTROLE GERAL DO SISTEMA (ACESSO TOTAL)
+          </h3>
+          <p class="text-xs text-[#94A3B8]">Gestão de usuários, permissões (RBAC) e trilha de auditoria de segurança.</p>
+        </div>
+        <button onclick="abrirModalNovoUsuario()" class="px-4 py-2.5 bg-[#F59E0B] hover:bg-[#D97706] text-black font-bold text-xs font-mono rounded-xl transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)] flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zm3 11a6 6 0 01-12 0v-1h6v1a6 6 0 0112 0v1z"/></svg>
+          NOVO USUÁRIO
+        </button>
+      </div>
+
+      <!-- Segurança dos Dados: Backup -->
+      <div class="bg-[#121824] rounded-2xl border border-[#1E293B] overflow-hidden shadow-2xl">
+        <div class="bg-[#0E131F] border-b border-[#1E293B] px-5 py-3 flex items-center justify-between">
+          <h4 class="text-xs font-bold text-white font-mono flex items-center gap-2">
+            <svg class="w-4 h-4 text-[#00FF66]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5 5 0 00-9.78 1.096A4 4 0 003 15zM8.5 13h7M12 9.5v7"/></svg>
+            BACKUP DO BANCO DE DADOS (PROTEÇÃO TOTAL)
+          </h4>
+          <button onclick="gerarBackupAgora()" class="px-4 py-2 bg-[#00FF66] hover:bg-emerald-400 text-black font-bold text-[11px] font-mono rounded-xl transition-all shadow-[0_0_15px_rgba(0,255,102,0.3)] flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            GERAR BACKUP AGORA
+          </button>
+        </div>
+        <div class="p-4 text-xs font-mono text-[#94A3B8] space-y-2">
+          <p class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-[#00FF66] animate-pulse"></span>
+            Backup automático <b class="text-white">TODO DIA</b> + ao ligar o servidor, guardando <b class="text-white">30 cópias</b> (~1 mês). Cada alteração é gravada em disco imediatamente (SQLite WAL + FULL).
+          </p>
+          <p class="flex items-center gap-2 text-[#00FF66]/90">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Recuperação automática: se o <b class="text-white">voltstock.db</b> for apagado ou corrompido, ao reiniciar o sistema ele restaura sozinho o último backup — nenhuma informação se perde.
+          </p>
+          <p id="backup-status" class="text-[#94A3B8]">Consultando último backup...</p>
+        </div>
+      </div>
+
+      <!-- Sincronização com a Nuvem (Google Drive) -->
+      <div class="bg-[#121824] rounded-2xl border border-[#1E293B] overflow-hidden shadow-2xl">
+        <div class="bg-[#0E131F] border-b border-[#1E293B] px-5 py-3 flex items-center justify-between">
+          <h4 class="text-xs font-bold text-white font-mono flex items-center gap-2">
+            <svg class="w-4 h-4 text-[#00FF66]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12m-1.5 0a1.5 1.5 0 101.5 1.5A1.5 1.5 0 0010.5 12zM9.41 3.5a10 10 0 015.18 0l1.44 3.44 3.5 1.44a10 10 0 010 5.18l-3.44 1.44-1.44 3.5a10 10 0 01-5.18 0l-1.44-3.44-3.5-1.44a10 10 0 010-5.18l3.44-1.44 1.44-3.5z"/></svg>
+            SINCRONIZAÇÃO COM A NUVEM (GOOGLE DRIVE)
+          </h4>
+          <span id="nuvem-admin-badge" class="px-2.5 py-1 text-[9px] font-mono font-bold uppercase rounded-full border bg-[#94A3B8]/10 text-[#94A3B8] border-[#1E293B]">Verificando...</span>
+        </div>
+        <div class="p-4 text-xs font-mono text-[#94A3B8] space-y-3">
+          <div class="flex items-start gap-2">
+            <svg class="w-4 h-4 flex-shrink-0 mt-0.5 text-[#00FF66]" fill="currentColor" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            <span>
+              <b class="text-white">Backup automático em tempo real na sua nuvem.</b>
+              A cada alteração de item (estoque, categorias, equipamentos, destinatários, usuários) o banco é copiado na hora para a pasta
+              <span class="text-white">"Almoxarifado Inteligente Backup"</span> na conta Google conectada. E ao ligar o servidor, a versão mais recente da nuvem é baixada.
+            </span>
+          </div>
+
+          <p id="nuvem-admin-status" class="text-[#94A3B8]">Consultando status da nuvem...</p>
+
+          <!-- Passo 1: Credenciais -->
+          <div class="border border-[#1E293B] rounded-xl p-3 space-y-2 bg-black/30">
+            <p class="text-[10px] text-[#64748B]">PASSO 1 — Credenciais do Google (console.cloud.google.com → APIs & Serviços → Credenciais):</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input type="text" id="nuvem-client-id" placeholder="Client ID (.apps.googleusercontent.com)" class="w-full bg-black/50 border border-[#1E293B] rounded-lg px-3 py-2 text-xs text-white font-mono placeholder-[#64748B] focus:border-[#00FF66] focus:outline-none">
+              <input type="password" id="nuvem-client-secret" placeholder="Client Secret" class="w-full bg-black/50 border border-[#1E293B] rounded-lg px-3 py-2 text-xs text-white font-mono placeholder-[#64748B] focus:border-[#00FF66] focus:outline-none">
+            </div>
+            <button onclick="salvarConfigNuvem()" class="px-3 py-1.5 bg-[#161D2B] hover:bg-[#1E293B] border border-[#1E293B] rounded-lg text-[11px] font-bold text-[#94A3B8] hover:text-white transition-colors">SALVAR CREDENCIAIS</button>
+            <p class="text-[10px] text-[#64748B]">URI de redirecionamento: <span class="text-[#00FF66]">https://SEU-LINK/api/nuvem/oauth2/callback</span> e <span class="text-[#00FF66]">http://localhost:3000/api/nuvem/oauth2/callback</span></p>
+          </div>
+
+          <!-- Passo 2: Ações -->
+          <div class="flex flex-wrap gap-2">
+            <button onclick="conectarNuvemAdmin()" class="px-3 py-2 bg-[#00FF66] hover:bg-[#00E65B] text-black font-bold text-[11px] font-mono rounded-xl transition-all flex items-center gap-2">
+              CONECTAR NUVEM
+            </button>
+            <button onclick="enviarNuvemAgora()" class="px-3 py-2 bg-black/40 border border-[#1E293B] hover:border-[#00FF66]/40 text-[#94A3B8] hover:text-[#00FF66] font-bold text-[11px] font-mono rounded-xl transition-all flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              ENVIAR BACKUP AGORA
+            </button>
+            <button onclick="restaurarNuvem()" class="px-3 py-2 bg-black/40 border border-[#1E293B] hover:border-[#F59E0B]/40 text-[#94A3B8] hover:text-amber-400 font-bold text-[11px] font-mono rounded-xl transition-all flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v-3a4 4 0 014-4h12m0 0l-3-3m3 3l-3 3"/></svg>
+              RESTAURAR DA NUVEM
+            </button>
+            <button onclick="desconectarNuvem()" class="px-3 py-2 bg-black/40 border border-[#1E293B] hover:border-red-500/40 text-[#94A3B8] hover:text-red-400 font-bold text-[11px] font-mono rounded-xl transition-all">
+              DESCONECTAR
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Atualização do Programa pela Nuvem -->
+      <div class="bg-[#121824] rounded-2xl border border-[#1E293B] overflow-hidden shadow-2xl">
+        <div class="bg-[#0E131F] border-b border-[#1E293B] px-5 py-3 flex items-center justify-between">
+          <h4 class="text-xs font-bold text-white font-mono flex items-center gap-2">
+            <svg class="w-4 h-4 text-[#38BDF8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a2 2 0 012-2 9 9 0 0118 0 2 2 0 01-2 2c-1.6 0-3.1-.4-4.3-1-.8 3.2-2 6-3.7 8.6V17a2 2 0 002 2h4v2H4v-2h4a2 2 0 002-2v-4.4C6.2 9 5 6.2 4.2 3z"/></svg>
+            ATUALIZAÇÃO DO PROGRAMA PELA NUVEM
+          </h4>
+          <span id="atualizacao-badge" class="px-2.5 py-1 text-[9px] font-mono font-bold uppercase rounded-full border bg-[#94A3B8]/10 text-[#94A3B8] border-[#1E293B]">Verificando...</span>
+        </div>
+        <div class="p-4 text-xs font-mono text-[#94A3B8] space-y-3">
+          <p id="atualizacao-status" class="text-[#94A3B8]">Consultando a nuvem...</p>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="verificarAtualizacao()" class="px-3 py-2 bg-black/40 border border-[#1E293B] hover:border-[#38BDF8]/40 text-[#94A3B8] hover:text-[#38BDF8] font-bold text-[11px] font-mono rounded-xl transition-all flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12v-3a3 3 0 013-3h12m0 0l-3-3m3 3l-3 3"/></svg>
+              VERIFICAR ATUALIZAÇÃO
+            </button>
+            <button id="btn-atualizar" onclick="aplicarAtualizacao()" disabled class="px-3 py-2 bg-[#38BDF8] hover:bg-[#0EA5E9] opacity-40 disabled:cursor-not-allowed text-black font-bold text-[11px] font-mono rounded-xl transition-all flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+              BAIXAR E ATUALIZAR AGORA
+            </button>
+          </div>
+          <p class="text-[10px] text-[#64748B]">Para publicar uma atualização por aqui: gere o pacote no PC que desenvolve com o <b class="text-white">gerar_enviar_pacote.bat</b> (ele joga a novidade na mesma pasta da nuvem). Depois é só clicar em <b class="text-white">BAIXAR E ATUALIZAR AGORA</b> — o servidor baixa, aplica e reinicia sozinho. Seu banco de dados e fotos ficam intactos.</p>
+        </div>
+      </div>
+
+      <!-- Tabela de Usuários -->
+      <div class="bg-[#121824] rounded-2xl border border-[#1E293B] overflow-hidden shadow-2xl">
+        <div class="bg-[#0E131F] border-b border-[#1E293B] px-5 py-3 flex items-center justify-between">
+          <h4 class="text-xs font-bold text-white font-mono">USUÁRIOS & PERMISSÕES</h4>
+          <span class="text-[10px] text-[#64748B] font-mono">TOTAL: <span id="conta-usuarios">0</span></span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-[#0E131F] border-b border-[#1E293B] text-[11px] font-mono text-[#94A3B8] uppercase tracking-wider">
+                <th class="py-3.5 px-4">ID</th>
+                <th class="py-3.5 px-4">Usuário</th>
+                <th class="py-3.5 px-4">Nome / Cargo</th>
+                <th class="py-3.5 px-4 text-center">Role</th>
+                <th class="py-3.5 px-4 text-center">Ativo</th>
+                <th class="py-3.5 px-4 text-center">Segurança</th>
+                <th class="py-3.5 px-4 text-center">Último Login</th>
+                <th class="py-3.5 px-4 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-usuarios-body" class="divide-y divide-[#1E293B]/60 text-xs">
+              <!-- Renderizado dinamicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Trilha de Auditoria -->
+      <div class="bg-[#121824] rounded-2xl border border-[#1E293B] overflow-hidden shadow-2xl">
+        <div class="bg-[#0E131F] border-b border-[#1E293B] px-5 py-3 flex items-center justify-between">
+          <h4 class="text-xs font-bold text-white font-mono flex items-center gap-2">
+            <svg class="w-4 h-4 text-[#00FF66]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+            TRILHA DE AUDITORIA DE SEGURANÇA
+          </h4>
+          <span class="text-[10px] text-[#64748B] font-mono">ÚLTIMOS 200 EVENTOS</span>
+        </div>
+        <div class="overflow-x-auto max-h-[380px] overflow-y-auto">
+          <table class="w-full text-left border-collapse">
+            <thead class="sticky top-0">
+              <tr class="bg-[#0E131F] border-b border-[#1E293B] text-[11px] font-mono text-[#94A3B8] uppercase tracking-wider">
+                <th class="py-3 px-4">Data / Hora</th>
+                <th class="py-3 px-4">Usuário</th>
+                <th class="py-3 px-4">Evento</th>
+                <th class="py-3 px-4">IP</th>
+                <th class="py-3 px-4">Detalhes</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-auditoria-body" class="divide-y divide-[#1E293B]/60 text-xs">
+              <!-- Renderizado dinamicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODAIS FLUTUANTES (COMPRAS / DISPARO / CRUD)-->
+  <!-- ========================================== -->
+
+  <!-- Modal: Solicitação de Compras Imediata -->
+  <div id="modal-compras" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#121824] border border-[#1E293B] rounded-2xl max-w-lg w-full p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-[#1E293B] pb-3">
+        <h3 class="text-base font-bold text-white font-mono flex items-center gap-2">
+          <svg class="w-5 h-5 text-[#00FF66]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+          SOLICITAR REPOSIÇÃO AO SETOR DE COMPRAS
+        </h3>
+        <button onclick="fecharModal('modal-compras')" class="text-[#94A3B8] hover:text-white">&times;</button>
+      </div>
+
+      <form id="form-solicitar-compras" onsubmit="enviarSolicitacaoCompras(event)" class="space-y-4 text-xs font-mono">
+        <input type="hidden" id="compras-item-id">
+        
+        <div>
+          <label class="block text-[#94A3B8] mb-1">Item Selecionado</label>
+          <input type="text" id="compras-item-nome" readonly class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white font-bold">
+        </div>
+
+        <div>
+          <label class="block text-[#00FF66] mb-1">Setor Solicitante</label>
+          <input type="text" id="compras-item-setor" placeholder="Ex: Manutenção Elétrica, Obras, Almoxarifado..." value="Almoxarifado Inteligente" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[#94A3B8] mb-1">Saldo Atual</label>
+            <input type="text" id="compras-item-saldo" readonly class="w-full bg-black/50 border border-red-500/30 text-red-400 font-bold rounded-xl px-3 py-2">
+          </div>
+          <div>
+            <label class="block text-[#00FF66] mb-1">Quantidade a Pedir *</label>
+            <input type="number" id="compras-item-qtd" required min="1" value="100" class="w-full bg-black/50 border border-[#00FF66]/50 text-white font-bold rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#00FF66]">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[#94A3B8] mb-1">Grau de Urgência</label>
+          <select id="compras-item-urgencia" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white">
+            <option value="CRÍTICA">🚨 CRÍTICA - Estoque Zerando / Parada Iminente</option>
+            <option value="ALTA" selected>⚠️ ALTA - Reposição de Limite Mínimo (≤ 10)</option>
+            <option value="NORMAL">ℹ️ NORMAL - Reposição Programada</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[#94A3B8] mb-1">Observações para Compras</label>
+          <textarea id="compras-item-obs" rows="3" class="w-full bg-black/50 border border-[#1E293B] rounded-xl p-3 text-white focus:border-[#00FF66] focus:outline-none" placeholder="Ex: Priorizar acabamento Inox 304, fornecedor habitual..."></textarea>
+        </div>
+
+        <div class="pt-3 border-t border-[#1E293B] flex justify-end gap-3">
+          <button type="button" onclick="fecharModal('modal-compras')" class="px-4 py-2 bg-[#1E293B] text-[#94A3B8] hover:text-white rounded-xl">Cancelar</button>
+          <button type="submit" class="px-5 py-2 bg-[#00FF66] text-black font-bold rounded-xl hover:bg-[#00E65B] shadow-[0_0_15px_rgba(0,255,102,0.3)]">EMITIR SOLICITAÇÃO</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Disparo Multi-WhatsApp para os Responsáveis -->
+  <div id="modal-disparo" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-[#121824] border border-[#1E293B] rounded-2xl max-w-xl w-full p-4 sm:p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-[#1E293B] pb-3">
+        <h3 class="text-base font-bold text-white font-mono flex items-center gap-2">
+          <svg class="w-5 h-5 text-[#00FF66]" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+          DISPARAR ALERTA SIMULTÂNEO VIA WHATSAPP (7 DESTINATÁRIOS)
+        </h3>
+        <button onclick="fecharModal('modal-disparo')" class="text-[#94A3B8] hover:text-white">&times;</button>
+      </div>
+
+      <div class="space-y-4 text-xs font-mono">
+        <div class="bg-black/60 p-3.5 rounded-xl border border-[#1E293B]">
+          <p class="text-[#94A3B8] text-[11px] mb-1">MENSAGEM GERADA AUTOMATICAMENTE:</p>
+          <pre id="preview-mensagem-disparo" class="text-white whitespace-pre-wrap font-sans text-xs leading-relaxed"></pre>
+        </div>
+
+        <p class="text-[#94A3B8]">Clique nos botões abaixo para acionar os 7 canais instantaneamente sem custo de API:</p>
+
+        <div id="lista-botoes-whatsapp" class="space-y-2.5">
+          <!-- Injetado dinamicamente -->
+        </div>
+
+        <div class="pt-3 border-t border-[#1E293B] flex justify-end">
+          <button onclick="fecharModal('modal-disparo')" class="px-5 py-2 bg-[#1E293B] hover:bg-[#334155] text-white rounded-xl">Concluir</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Cadastrar Novo Item no Estoque -->
+  <div id="modal-novo-item" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#121824] border border-[#1E293B] rounded-2xl max-w-lg w-full p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-[#1E293B] pb-3">
+        <h3 class="text-base font-bold text-white font-mono flex items-center gap-2">
+          <svg class="w-5 h-5 text-[#00FF66]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          CADASTRAR NOVO MATERIAL NO ALMOXARIFADO
+        </h3>
+        <button onclick="fecharModal('modal-novo-item')" class="text-[#94A3B8] hover:text-white">&times;</button>
+      </div>
+
+      <form id="form-novo-item" onsubmit="salvarNovoItemEstoque(event)" class="space-y-3.5 text-xs font-mono">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[#94A3B8] mb-1">ID / Código *</label>
+            <input type="text" id="novo-sku" required placeholder="Ex: PAR-M10-30" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none uppercase">
+          </div>
+          <div>
+            <label class="block text-[#94A3B8] mb-1">Categoria *</label>
+            <select id="novo-categoria" required class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white">
+              <option value="Fixadores">Fixadores</option>
+              <option value="Conectores">Conectores</option>
+              <option value="Insumos">Insumos</option>
+              <option value="EPI">EPI</option>
+              <option value="Cabos">Cabos e Fios</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[#94A3B8] mb-1">Nome / Descrição Completa *</label>
+          <input type="text" id="novo-nome" required placeholder="Ex: Parafuso Sextavado M10 x 30mm Aço 8.8" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[#94A3B8] mb-1">Qtd Atual *</label>
+            <input type="number" id="novo-qtd-atual" required min="0" value="50" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[#00FF66] mb-1">Mínimo (Alerta) *</label>
+            <input type="number" id="novo-qtd-minima" required min="1" value="20" class="w-full bg-black/50 border border-[#00FF66]/40 rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none font-bold">
+          </div>
+          <div>
+            <label class="block text-[#94A3B8] mb-1">Unidade</label>
+            <input type="text" id="novo-unidade" value="UN" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none uppercase">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[#94A3B8] mb-1">Localização no Almoxarifado</label>
+            <input type="text" id="novo-localizacao" placeholder="Ex: Gaveta C-02" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[#94A3B8] mb-1">Preço Estimado Unitário (R$)</label>
+            <input type="number" step="0.01" id="novo-preco" placeholder="0.00" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none">
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-[#1E293B] flex justify-end gap-3">
+          <button type="button" onclick="fecharModal('modal-novo-item')" class="px-4 py-2 bg-[#1E293B] text-[#94A3B8] rounded-xl">Cancelar</button>
+          <button type="submit" class="px-5 py-2 bg-[#00FF66] text-black font-bold rounded-xl hover:bg-[#00E65B]">SALVAR NO ESTOQUE</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Corrigir ID e Nome do Item -->
+  <div id="modal-editar-item" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#121824] border border-[#1E293B] rounded-2xl max-w-md w-full p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-[#1E293B] pb-3">
+        <h3 class="text-base font-bold text-white font-mono flex items-center gap-2">
+          <svg class="w-5 h-5 text-[#00FF66]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          CORRIGIR ITEM
+        </h3>
+        <button onclick="fecharModal('modal-editar-item')" class="text-[#94A3B8] hover:text-white">&times;</button>
+      </div>
+
+      <form id="form-editar-item" onsubmit="salvarEdicaoItem(event)" class="space-y-3.5 text-xs font-mono">
+        <input type="hidden" id="edit-item-id">
+        <div>
+          <label class="block text-[#00FF66] mb-1">ID do Item (Código) *</label>
+          <input type="text" id="edit-item-codigo" required class="w-full bg-black/50 border border-[#00FF66]/50 rounded-xl px-3 py-2 text-white font-mono font-bold focus:border-[#00FF66] focus:outline-none" placeholder="Ex: PORCA-10MM">
+        </div>
+        <div>
+          <label class="block text-[#94A3B8] mb-1">Nome do Item *</label>
+          <input type="text" id="edit-item-nome" required class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none">
+        </div>
+        <div class="pt-3 border-t border-[#1E293B] flex justify-end gap-3">
+          <button type="button" onclick="fecharModal('modal-editar-item')" class="px-4 py-2 bg-[#1E293B] text-[#94A3B8] rounded-xl">Cancelar</button>
+          <button type="submit" class="px-5 py-2 bg-[#00FF66] text-black font-bold rounded-xl hover:bg-[#00E65B]">SALVAR</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Corrigir Categoria, Localização e Saldo Físico -->
+  <div id="modal-editar-item-detalhe" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#121824] border border-[#1E293B] rounded-2xl max-w-md w-full p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-[#1E293B] pb-3">
+        <h3 class="text-base font-bold text-white font-mono flex items-center gap-2">
+          <svg class="w-5 h-5 text-[#00FF66]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          EDITAR DETALHES
+        </h3>
+        <button onclick="fecharModal('modal-editar-item-detalhe')" class="text-[#94A3B8] hover:text-white">&times;</button>
+      </div>
+
+      <form id="form-editar-item-detalhe" onsubmit="salvarEdicaoDetalheItem(event)" class="space-y-3.5 text-xs font-mono">
+        <input type="hidden" id="edit-detalhe-id">
+        <div>
+          <label class="block text-[#94A3B8] mb-1">Categoria *</label>
+          <input type="text" id="edit-detalhe-categoria" required class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none" placeholder="Ex: Elétrica / Hidráulica">
+        </div>
+        <div>
+          <label class="block text-[#94A3B8] mb-1">Localização *</label>
+          <input type="text" id="edit-detalhe-localizacao" required class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none" placeholder="Ex: Prateleira A-03">
+        </div>
+        <div>
+          <label class="block text-[#00FF66] mb-1">Saldo Físico *</label>
+          <input type="number" id="edit-detalhe-qtd" required min="0" step="1" class="w-full bg-black/50 border border-[#00FF66]/50 rounded-xl px-3 py-2 text-white font-mono font-bold focus:border-[#00FF66] focus:outline-none">
+        </div>
+        <div class="pt-3 border-t border-[#1E293B] flex justify-end gap-3">
+          <button type="button" onclick="fecharModal('modal-editar-item-detalhe')" class="px-4 py-2 bg-[#1E293B] text-[#94A3B8] rounded-xl">Cancelar</button>
+          <button type="submit" class="px-5 py-2 bg-[#00FF66] text-black font-bold rounded-xl hover:bg-[#00E65B]">SALVAR</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Gerenciar Categorias -->
+  <div id="modal-gestao-categorias" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#121824] border border-[#1E293B] rounded-2xl max-w-lg w-full p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-[#1E293B] pb-3">
+        <h3 class="text-base font-bold text-white font-mono flex items-center gap-2">
+          <svg class="w-5 h-5 text-[#00FF66]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14v6m-8-6v6m-4-2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H7a2 2 0 00-2 2zm14-4v-2a2 2 0 00-2-2h-2a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2z"/></svg>
+          GERENCIAR CATEGORIAS
+        </h3>
+        <button onclick="fecharModal('modal-gestao-categorias')" class="text-[#94A3B8] hover:text-white">&times;</button>
+      </div>
+
+      <div class="flex gap-2">
+        <input type="text" id="nova-categoria-input" placeholder="Digite o nome da nova categoria..." onkeydown="if(event.key==='Enter')adicionarCategoria()" class="flex-1 bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-sm text-white focus:border-[#00FF66] focus:outline-none">
+        <button onclick="adicionarCategoria()" class="px-3 py-2 bg-[#00FF66] text-black font-bold rounded-xl hover:bg-[#00E65B] flex items-center gap-1 whitespace-nowrap">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Adicionar
+        </button>
+      </div>
+
+      <div id="lista-categorias-gestao" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+    </div>
+  </div>
+
+  <!-- Modal: Cadastrar Novo Equipamento de Calibração -->
+  <div id="modal-novo-equipamento" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#121824] border border-[#1E293B] rounded-2xl max-w-lg w-full p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-[#1E293B] pb-3">
+        <h3 class="text-base font-bold text-white font-mono flex items-center gap-2">
+          <svg class="w-5 h-5 text-[#00FF66]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          NOVO INSTRUMENTO / EQUIPAMENTO
+        </h3>
+        <button onclick="fecharModal('modal-novo-equipamento')" class="text-[#94A3B8] hover:text-white">&times;</button>
+      </div>
+
+      <form id="form-novo-equipamento" onsubmit="salvarNovoEquipamento(event)" class="space-y-3.5 text-xs font-mono">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[#94A3B8] mb-1">TAG Patrimônio *</label>
+            <input type="text" id="equip-tag" required placeholder="Ex: PAT-EL-005" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white uppercase focus:border-[#00FF66] focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[#94A3B8] mb-1">Nº de Série *</label>
+            <input type="text" id="equip-serie" required placeholder="Ex: SN-88219" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[#94A3B8] mb-1">Nome do Equipamento *</label>
+          <input type="text" id="equip-nome" required placeholder="Ex: Torquímetro de Estalo 20 a 100Nm" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[#94A3B8] mb-1">Fabricante</label>
+            <input type="text" id="equip-fab" placeholder="Ex: Gedore / Fluke" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[#94A3B8] mb-1">Modelo</label>
+            <input type="text" id="equip-modelo" placeholder="Ex: Torcofix-K" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[#94A3B8] mb-1">Data da Última Calibração</label>
+            <input type="date" id="equip-dt-ultima" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[#00FF66] mb-1">Validade Limite *</label>
+            <input type="date" id="equip-dt-validade" required class="w-full bg-black/50 border border-[#00FF66]/50 rounded-xl px-3 py-2 text-white font-bold focus:border-[#00FF66] focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[#94A3B8] mb-1">Laboratório RBC</label>
+            <input type="text" id="equip-lab" placeholder="Ex: LabCal Metrologia" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[#94A3B8] mb-1">Responsável Técnico</label>
+            <input type="text" id="equip-resp" value="Victor Hugo" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none">
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-[#1E293B] flex justify-end gap-3">
+          <button type="button" onclick="fecharModal('modal-novo-equipamento')" class="px-4 py-2 bg-[#1E293B] text-[#94A3B8] rounded-xl">Cancelar</button>
+          <button type="submit" class="px-5 py-2 bg-[#00FF66] text-black font-bold rounded-xl hover:bg-[#00E65B]">SALVAR EQUIPAMENTO</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Editar Destinatário de Notificação -->
+  <div id="modal-editar-destinatario" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#121824] border border-[#1E293B] rounded-2xl max-w-md w-full p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-[#1E293B] pb-3">
+        <h3 class="text-base font-bold text-white font-mono flex items-center gap-2">
+          <svg class="w-5 h-5 text-[#00FF66]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          EDITAR DESTINATÁRIO
+        </h3>
+        <button onclick="fecharModal('modal-editar-destinatario')" class="text-[#94A3B8] hover:text-white">&times;</button>
+      </div>
+
+      <form id="form-editar-destinatario" onsubmit="salvarEdicaoDestinatario(event)" class="space-y-3.5 text-xs font-mono">
+        <input type="hidden" id="edit-dest-id">
+        <div>
+          <label class="block text-[#94A3B8] mb-1">Nome do Responsável *</label>
+          <input type="text" id="edit-dest-nome" required class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-[#94A3B8] mb-1">Cargo / Função *</label>
+          <input type="text" id="edit-dest-cargo" required class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-[#00FF66] mb-1">Telefone WhatsApp (com DDI e DDD) *</label>
+          <input type="text" id="edit-dest-whats" required placeholder="Ex: 5512999998888" class="w-full bg-black/50 border border-[#00FF66]/50 rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none">
+          <span class="text-[10px] text-[#64748B]">Formato: 55 + DDD + Número (apenas dígitos)</span>
+        </div>
+        <div>
+          <label class="block text-[#94A3B8] mb-1">E-mail Corporativo *</label>
+          <input type="email" id="edit-dest-email" required class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none">
+        </div>
+        <div class="pt-3 border-t border-[#1E293B] flex justify-end gap-3">
+          <button type="button" onclick="fecharModal('modal-editar-destinatario')" class="px-4 py-2 bg-[#1E293B] text-[#94A3B8] rounded-xl">Cancelar</button>
+          <button type="submit" class="px-5 py-2 bg-[#00FF66] text-black font-bold rounded-xl hover:bg-[#00E65B]">SALVAR CONTATO</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Criar Novo Usuário -->
+  <div id="modal-novo-usuario" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#121824] border border-[#1E293B] rounded-2xl max-w-md w-full p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-[#1E293B] pb-3">
+        <h3 class="text-base font-bold text-white font-mono flex items-center gap-2">
+          <svg class="w-5 h-5 text-[#F59E0B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zm3 11a6 6 0 01-12 0v-1h6v1a6 6 0 0112 0v1z"/></svg>
+          CRIAR USUÁRIO NO SISTEMA
+        </h3>
+        <button onclick="fecharModal('modal-novo-usuario')" class="text-[#94A3B8] hover:text-white">&times;</button>
+      </div>
+
+      <form id="form-novo-usuario" onsubmit="salvarNovoUsuario(event)" class="space-y-3.5 text-xs font-mono">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[#94A3B8] mb-1">Usuário (Login) *</label>
+            <input type="text" id="novo-user-username" required class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[#00FF66] mb-1">Senha * (mín 6)</label>
+            <input type="password" id="novo-user-senha" required minlength="6" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[#94A3B8] mb-1">Nome Completo *</label>
+          <input type="text" id="novo-user-nome" required placeholder="Ex: João da Silva" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-[#94A3B8] mb-1">Cargo / Função</label>
+          <input type="text" id="novo-user-cargo" placeholder="Ex: Encarregado do Almoxarifado" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white focus:border-[#00FF66] focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-[#F59E0B] mb-1">Nível de Acesso (Role) *</label>
+          <select id="novo-user-role" class="w-full bg-black/50 border border-[#1E293B] rounded-xl px-3 py-2 text-white">
+            <option value="OPERADOR">OPERADOR — Acesso às operações</option>
+            <option value="COMPRAS">COMPRAS — Visualização + compras</option>
+            <option value="CONSULTA">CONSULTA — Somente leitura</option>
+            <option value="ADMIN_MASTER">ADMIN_MASTER — Acesso total (não recomendado)</option>
+          </select>
+        </div>
+
+        <div class="pt-3 border-t border-[#1E293B] flex justify-end gap-3">
+          <button type="button" onclick="fecharModal('modal-novo-usuario')" class="px-4 py-2 bg-[#1E293B] text-[#94A3B8] rounded-xl">Cancelar</button>
+          <button type="submit" class="px-5 py-2 bg-[#F59E0B] text-black font-bold rounded-xl hover:bg-[#D97706]">CRIAR USUÁRIO</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-6 right-6 z-50 space-y-2"></div>
+
+  <!-- Aviso de atualização automática (você no controle) -->
+  <div id="painel-versao" class="hidden fixed top-0 left-0 right-0 z-[60] bg-[#00FF66] text-black px-5 py-3 flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(0,255,102,0.6)]">
+    <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+    <p class="text-xs font-mono font-bold">SISTEMA ATUALIZADO PELO ADMIN — APLICANDO MUDANÇAS... <span id="versao-explicacao" class="font-normal"></span></p>
+  </div>
+
+  <!-- Scripts da Aplicação -->
+  <script src="app.js"></script>
+
+  <!-- PWA: registro do service worker (apenas funciona em HTTPS) -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(function () {});
+    }
+  </script>
+</body>
+</html>
+

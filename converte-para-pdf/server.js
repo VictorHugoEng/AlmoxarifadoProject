@@ -34,7 +34,7 @@ const CANDIDATOS_SOFFICE = [
   'C:\\Program Files\\LibreOffice\\program\\soffice.exe',
   'C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe',
   path.join(process.env.LOCALAPPDATA || '', 'Programs', 'LibreOffice', 'program', 'soffice.exe'),
-  'soffice'
+  'soffice',
 ].filter(Boolean);
 
 function acharSoffice() {
@@ -79,7 +79,7 @@ function rodarSoffice(entrada, pastaSaida, perfil) {
     'pdf:writer_pdf_Export',
     '--outdir',
     pastaSaida,
-    entrada
+    entrada,
   ];
   return new Promise((resolve, reject) => {
     execFile(SOFFICE, args, { timeout: 120000, windowsHide: true }, (err, stdout, stderr) => {
@@ -112,12 +112,15 @@ async function converterParaPDF(nome, buffer) {
     if (!fs.existsSync(arquivoPdf)) {
       // As vezes o LibreOffice troca o nome; procura qualquer .pdf gerado
       const achados = fs.readdirSync(pastaSaida).filter(f => f.toLowerCase().endsWith('.pdf'));
-      if (!achados.length) throw new Error('O LibreOffice nao gerou o PDF (formato nao suportado?).');
+      if (!achados.length)
+        throw new Error('O LibreOffice nao gerou o PDF (formato nao suportado?).');
       arquivoPdf = path.join(pastaSaida, achados[0]);
     }
     return fs.readFileSync(arquivoPdf);
   } finally {
-    try { fs.rmSync(dir, { recursive: true, force: true }); } catch (e) {}
+    try {
+      fs.rmSync(dir, { recursive: true, force: true });
+    } catch (e) {}
   }
 }
 
@@ -143,7 +146,7 @@ app.get('/api/diagnostico', (req, res) => {
     ok: true,
     soffice: SOFFICE,
     libreoffice: !!SOFFICE,
-    limite_mb: Math.round(TAMANHO_MAX / 1024 / 1024)
+    limite_mb: Math.round(TAMANHO_MAX / 1024 / 1024),
   });
 });
 
@@ -169,7 +172,9 @@ app.post('/api/converter', express.raw({ type: '*/*', limit: '80mb' }), async (r
 
     SOFFICE = SOFFICE || acharSoffice();
     if (!SOFFICE) {
-      return res.status(503).json({ erro: 'LibreOffice nao encontrado neste computador. Rode o instalador (INSTALAR-LIBREOFFICE.bat).' });
+      return res.status(503).json({
+        erro: 'LibreOffice nao encontrado neste computador. Rode o instalador (INSTALAR-LIBREOFFICE.bat).',
+      });
     }
 
     const pdf = await naFila(() => converterParaPDF(nome, buffer));

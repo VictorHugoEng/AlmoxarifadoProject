@@ -5,7 +5,7 @@
 //  - Credenciais OAuth (Client ID/Secret) + tokens ficam em nuvem_config.json
 //  - O token de acesso é renovado sozinho (refresh_token)
 //  - A cada alteração de item, o banco (voltstock.db) é copiado para uma
-//    pasta "ServMil Backup" no Google Drive de quem Conectar
+//    pasta "Almoxarifado Inteligente Backup" no Google Drive de quem Conectar
 //  - Ao ligar o servidor, baixa a versão mais recente da nuvem (caso outro
 //    computador tenha trabalhado)
 // ============================================================
@@ -22,13 +22,13 @@ function caminhoDoBanco() {
   return pegarDatabase().DB_PATH;
 }
 
-const ARQUIVO_CONFIG = path.join(__dirname, 'nuvem_config.json');
+const ARQUIVO_CONFIG = process.env.ALMOX_CONFIG_PATH || path.join(__dirname, 'nuvem_config.json');
 const PASTA_BACKUPS = path.join(__dirname, 'backups');
 
-const NOME_PASTA_DRIVE = 'ServMil Backup';
+const NOME_PASTA_DRIVE = 'Almoxarifado Inteligente Backup';
 const NOME_ARQUIVO_DRIVE = 'voltstock_live.db';
-const NOME_ZIP_ATUALIZACAO = 'servmil_update.zip';
-const NOME_VERSAO_NUVEM = 'servmil_versao.txt';
+const NOME_ZIP_ATUALIZACAO = 'almoxarifado_update.zip';
+const NOME_VERSAO_NUVEM = 'almoxarifado_versao.txt';
 const ESCOPOS =
   'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email';
 
@@ -232,7 +232,7 @@ async function encontrarArquivo(folderId) {
   return encontrarArquivoPorNome(folderId, NOME_ARQUIVO_DRIVE);
 }
 
-// Cria ou atualiza um arquivo (por nome) dentro da pasta "ServMil Backup".
+// Cria ou atualiza um arquivo (por nome) dentro da pasta "Almoxarifado Inteligente Backup".
 async function fazerUploadBytes(nome, bytes, mime = 'application/octet-stream') {
   const folderId = await garantirPasta();
   let fileId = await encontrarArquivoPorNome(folderId, nome);

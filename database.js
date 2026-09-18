@@ -3,12 +3,15 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 
-const DB_PATH = path.join(__dirname, 'voltstock.db');
+const DB_PATH = process.env.ALMOX_DB_PATH || path.join(__dirname, 'voltstock.db');
+// Modo isolado (testes/dev): quando ALMOX_DB_PATH é informado explicitamente,
+// abre esse banco dedicado sem tentar recuperar de backups locais ou da nuvem.
+const DB_ISOLADO = !!process.env.ALMOX_DB_PATH;
 const PASTA_BACKUPS = path.join(__dirname, 'backups');
 
 // Processo auxiliar (filho) disparado pela recuperação da nuvem:
 // nele NÃO tentamos recuperar de novo, para não criar loop infinito.
-const SKIP_RECUPERACAO = process.env.SERVMIL_NO_RECOVER === '1';
+const SKIP_RECUPERACAO = process.env.ALMOX_NO_RECOVER === '1';
 
 // ============================================================
 // RECUPERAÇÃO AUTOMÁTICA DE DADOS (PROTEÇÃO CONTRA APAGÃO)
@@ -83,7 +86,7 @@ function restaurarDaNuvem() {
       `.catch(e=>{ console.error(e.message); process.exit(1); })`;
 
     execSync(`${JSON.stringify(process.execPath)} -e ${JSON.stringify(script)}`, {
-      env: { ...process.env, SERVMIL_NO_RECOVER: '1' },
+      env: { ...process.env, ALMOX_NO_RECOVER: '1' },
       timeout: 60000,
       stdio: ['ignore', 'pipe', 'pipe'],
       encoding: 'utf8',
@@ -108,7 +111,7 @@ function restaurarDaNuvem() {
 
 // Se o banco principal NÃO existir (apagado sem querer), recupera do último backup
 // (local primeiro; se não houver nenhum local, tenta a nuvem).
-if (!SKIP_RECUPERACAO) {
+if (!SKIP_RECUPERACAO && !DB_ISOLADO) {
   if (!fs.existsSync(DB_PATH)) {
     if (!restaurarBackupMaisRecente() && !restaurarDaNuvem()) {
       console.log(
@@ -184,7 +187,7 @@ function gerarTokenSessao() {
 }
 
 /**
- * Inicialização e migração do esquema de dados relacional ServMil
+ * Inicialização e migração do esquema de dados relacional do Almoxarifado
  */
 function initDatabase() {
   db.exec(`
@@ -265,8 +268,8 @@ function initDatabase() {
       quantidade_atual INTEGER NOT NULL,
       quantidade_solicitada INTEGER NOT NULL,
       urgencia TEXT NOT NULL DEFAULT 'ALTA',
-      solicitante TEXT NOT NULL DEFAULT 'Almoxarifado ServMil',
-      setor TEXT NOT NULL DEFAULT 'Almoxarifado ServMil',
+      solicitante TEXT NOT NULL DEFAULT 'Almoxarifado Inteligente',
+      setor TEXT NOT NULL DEFAULT 'Almoxarifado Inteligente',
       status TEXT NOT NULL DEFAULT 'PENDENTE',
       observacao TEXT,
       feedback_compras TEXT DEFAULT 'Aguardando início de cotação',
@@ -298,7 +301,7 @@ function initDatabase() {
     CREATE TABLE IF NOT EXISTS observacoes_setores (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       autor TEXT NOT NULL,
-      setor TEXT NOT NULL DEFAULT 'Almoxarifado ServMil',
+      setor TEXT NOT NULL DEFAULT 'Almoxarifado Inteligente',
       observacao TEXT NOT NULL,
       status TEXT NOT NULL DEFAULT 'EM_ABERTO',
       criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -354,7 +357,7 @@ function initDatabase() {
   // ============================================================
   const totalUsuarios = db.prepare('SELECT COUNT(*) AS total FROM usuarios').get().total;
   if (totalUsuarios === 0) {
-    console.log('[Segurança ServMil] Cadastrando Administrador Master (anderson)...');
+    console.log('[Segurança] Cadastrando Administrador Master (anderson)...');
     const { salt, hash } = gerarHashSenha('123456');
 
     db.prepare(
@@ -364,7 +367,7 @@ function initDatabase() {
     `
     ).run('anderson', hash, salt, 'Anderson', 'Administrador Geral do Sistema', 'ADMIN_MASTER');
     console.log(
-      '[Segurança ServMil] Administrador Master (anderson) criado com sucesso e protegido com scrypt/256-bit!'
+      '[Segurança] Administrador Master (anderson) criado com sucesso e protegido com scrypt/256-bit!'
     );
   }
 
@@ -377,7 +380,7 @@ function initDatabase() {
 
   try {
     db.exec(
-      'ALTER TABLE solicitacoes_compras ADD COLUMN setor TEXT DEFAULT "Almoxarifado ServMil";'
+      'ALTER TABLE solicitacoes_compras ADD COLUMN setor TEXT DEFAULT "Almoxarifado Inteligente";'
     );
   } catch (e) {}
 
@@ -390,7 +393,7 @@ function initDatabase() {
     db.exec('ALTER TABLE mensagens_chat ADD COLUMN imagem TEXT;');
   } catch (e) {}
 
-  // Seeding dos 6 Destinatários da ServMil (Vinicius, Cleber, Johnny, Saulo, Murilo, Daniele)
+  // Seeding dos destinatários padrão de notificação (dados de exemplo)
   const countDest = db.prepare('SELECT COUNT(*) as total FROM destinatarios_notificacao').get();
   if (countDest.total === 0) {
     const insertDest = db.prepare(`
@@ -398,16 +401,16 @@ function initDatabase() {
       VALUES (?, ?, ?, ?, ?)
     `);
 
-    const destinatariosServMil = [
-      ['Vinicius', 'Gerente Geral', '5512991000001', 'vinicius.gerencia@servmil.com.br', 1],
-      ['Cleber', 'Diretor', '5512991000002', 'cleber.diretoria@servmil.com.br', 1],
-      ['Johnny', 'Diretor', '5512991000003', 'johnny.diretoria@servmil.com.br', 1],
-      ['Saulo', 'Diretor', '5512991000004', 'saulo.diretoria@servmil.com.br', 1],
-      ['Murilo', 'Diretor', '5512991000005', 'murilo.diretoria@servmil.com.br', 1],
-      ['Daniele', 'Setor de Compras', '5512991000006', 'daniele.compras@servmil.com.br', 1],
+    const destinatariosPadrao = [
+      ['Ana Souza', 'Gerente Geral', '5511900000001', 'ana.souza@empresa.com.br', 1],
+      ['Bruno Lima', 'Diretor', '5511900000002', 'bruno.lima@empresa.com.br', 1],
+      ['Carla Mendes', 'Diretora', '5511900000003', 'carla.mendes@empresa.com.br', 1],
+      ['Diego Rocha', 'Diretor', '5511900000004', 'diego.rocha@empresa.com.br', 1],
+      ['Elisa Ramos', 'Diretora', '5511900000005', 'elisa.ramos@empresa.com.br', 1],
+      ['Fernanda Alves', 'Setor de Compras', '5511900000006', 'fernanda.alves@empresa.com.br', 1],
     ];
 
-    for (const dest of destinatariosServMil) {
+    for (const dest of destinatariosPadrao) {
       insertDest.run(...dest);
     }
   }
@@ -429,7 +432,7 @@ function initDatabase() {
     for (const nome of categoriasPadrao) insertCat.run(nome);
   }
 
-  // Seeding de itens com categorias de elétrica da ServMil
+  // Seeding de itens com categorias de elétrica
   const countItens = db.prepare('SELECT COUNT(*) as total FROM estoque_itens').get();
   if (countItens.total === 0) {
     const insertItem = db.prepare(`
@@ -438,7 +441,7 @@ function initDatabase() {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    const itensEletricaServMil = [
+    const itensEletrica = [
       [
         'PAR-001',
         'Parafuso Sextavado M8 x 25mm Inox 304',
@@ -621,7 +624,7 @@ function initDatabase() {
       ],
     ];
 
-    for (const item of itensEletricaServMil) {
+    for (const item of itensEletrica) {
       insertItem.run(...item);
     }
   }
@@ -721,10 +724,10 @@ function initDatabase() {
         200,
         'ALTA',
         'Victor Hugo (Almoxarifado)',
-        'Almoxarifado ServMil',
+        'Almoxarifado Inteligente',
         'EM_COTACAO',
         'Estoque atingiu 18 un (crítico ≤ 20). Necessário para montagem de infraestrutura.',
-        'Cotação com fornecedor habitual realizada. Aguardando liberação do Cleber.'
+        'Cotação com fornecedor habitual realizada. Aguardando liberação da diretoria.'
       );
     }
 
@@ -742,10 +745,10 @@ function initDatabase() {
         50,
         'CRÍTICA',
         'Victor Hugo (Almoxarifado)',
-        'Almoxarifado ServMil',
+        'Almoxarifado Inteligente',
         'PENDENTE',
         'Faltam suportes para continuidade da obra da linha de produção.',
-        'Pedido recebido em Compras por Daniele. Aguardando liberação do Johnny.'
+        'Pedido recebido em Compras. Aguardando liberação da diretoria.'
       );
     }
   }
