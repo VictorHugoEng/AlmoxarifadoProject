@@ -14,6 +14,13 @@
 
 🇧🇷 [Leia em Português (BR)](README.pt-BR.md)
 
+> ### ▶️ Live demo
+>
+> **[almoxarifado-inteligente.onrender.com](https://almoxarifado-inteligente.onrender.com)**
+> — login `anderson` / password `demo-almox-2026`.
+> Free Render instance: it sleeps when idle (first load ~50s) and data
+> resets on restart.
+
 ---
 
 ## Screenshots
@@ -126,10 +133,13 @@ npm start
 
 ```
 Username: anderson
-Password: 123456
+Password: 123456      # local default
 Role:     ADMIN_MASTER
 ```
 
+> On the **live demo** the password is `demo-almox-2026` (set by `render.yaml` through
+> `ALMOX_ADMIN_PASSWORD`). Locally the default is `123456`.
+>
 > ⚠️ **Change the password immediately after the first login.**
 
 ## Configuration
