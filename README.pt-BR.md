@@ -130,10 +130,15 @@ Variáveis de ambiente reconhecidas pelo sistema:
 ```env
 # Servidor
 PORT=3000
+# Em containers/PaaS (Docker, Render, Railway...) use 0.0.0.0
+HOST=0.0.0.0
 
 # Opcional: caminho do banco e do arquivo de credenciais da nuvem
 ALMOX_DB_PATH=C:\dados\voltstock.db
 ALMOX_CONFIG_PATH=C:\dados\nuvem_config.json
+
+# Opcional: senha inicial do admin (só na 1ª execução; padrão 123456)
+ALMOX_ADMIN_PASSWORD=troque-esta-senha
 
 # Opcional: desliga a recuperação automática no boot (1 = desligado)
 ALMOX_NO_RECOVER=1
@@ -301,21 +306,21 @@ pm2 startup
 pm2 save
 ```
 
-### Docker
+### Deploy com 1 clique (Render)
 
-```dockerfile
-FROM node:24-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --omit=dev
-COPY . .
-EXPOSE 3000
-CMD ["node", "server.js"]
-```
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/VictorHugoEng/AlmoxarifadoProject)
+
+O blueprint [`render.yaml`](render.yaml) cria um serviço web gratuito que define
+`HOST=0.0.0.0` e uma senha de admin de demonstração via `ALMOX_ADMIN_PASSWORD`. A instância
+gratuita usa disco **efêmero** — os dados resetam ao reiniciar, o que é ideal para um demo.
+
+### Docker (qualquer provedor)
+
+O [`Dockerfile`](Dockerfile) já está pronto:
 
 ```bash
 docker build -t almoxarifado .
-docker run -d -p 3000:3000 -v ./data:/app/data almoxarifado
+docker run -d -p 3000:3000 -e ALMOX_ADMIN_PASSWORD=troque-me almoxarifado
 ```
 
 ### Systemd (Linux)
