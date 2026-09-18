@@ -6,8 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "lint": "eslint . --ext .js",
-    "lint:fix": "eslint . --ext .js --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "node --test",
@@ -24,7 +24,7 @@
     "google-drive",
     "pwa"
   ],
-  "author": "Victor Hugo <victorhugoeng@email.com>",
+  "author": "Victor Hugo <330597751+VictorHugoEng@users.noreply.github.com>",
   "license": "MIT",
   "type": "commonjs",
   "engines": {
@@ -34,10 +34,12 @@
     "express": "^5.2.1"
   },
   "devDependencies": {
-    "eslint": "^8.57.0",
-    "prettier": "^3.2.5",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-prettier": "^5.1.3",
-    "husky": "^9.0.11"
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.10.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.0",
+    "globals": "^17.12.0",
+    "husky": "^9.1.7",
+    "prettier": "^3.9.0"
   }
 }
