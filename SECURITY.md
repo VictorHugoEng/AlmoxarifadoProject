@@ -99,4 +99,4 @@ Responderemos em **48h** com:
 
 ---
 
-**Segurança é responsabilidade de todos.** Obrigado por ajudar a manter o ServMil seguro! 🛡️
+**Segurança é responsabilidade de todos.** Obrigado por ajudar a manter o sistema seguro! 🛡️

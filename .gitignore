@@ -6,7 +6,7 @@ node_modules/
 *.mbtree
 backups/
 pacotes_enviados/
-public/
+public/uploads/
 .vscode/
 .kilo/
 configurar_ngrok.bat

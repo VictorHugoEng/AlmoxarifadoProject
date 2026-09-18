@@ -1,5 +1,5 @@
 {
-  "name": "servmil-almoxarifado",
+  "name": "almoxarifado-inteligente",
   "version": "1.0.0",
   "description": "Sistema inteligente de gestão de almoxarifado com backup automático, sincronização Google Drive, chat privado, auditoria completa e atualização over-the-air",
   "main": "server.js",
@@ -10,7 +10,7 @@
     "lint:fix": "eslint . --ext .js --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "echo \"No tests specified\" && exit 0",
+    "test": "node --test",
     "audit": "npm audit --audit-level=high",
     "prepare": "husky install"
   },
@@ -18,7 +18,6 @@
     "almoxarifado",
     "estoque",
     "gestao",
-    "servmil",
     "sqlite",
     "express",
     "backup",
@@ -29,7 +28,7 @@
   "license": "MIT",
   "type": "commonjs",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.13.0"
   },
   "dependencies": {
     "express": "^5.2.1"

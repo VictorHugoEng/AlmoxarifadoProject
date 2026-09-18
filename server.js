@@ -927,7 +927,7 @@ setInterval(
 
 // ==========================================
 // ATUALIZAÇÃO DO PROGRAMA PELA NUVEM
-// (coloque servmil_update.zip + servmil_versao.txt na mesma pasta da nuvem)
+// (coloque almoxarifado_update.zip + almoxarifado_versao.txt na mesma pasta da nuvem)
 // ==========================================
 const ARQUIVO_VERSAO = path.join(__dirname, 'versao.txt');
 const PASTA_ATUALIZACAO = path.join(__dirname, 'atualizacao_pendente');
@@ -1456,7 +1456,7 @@ app.post('/api/observacoes', (req, res) => {
       )
       .run(
         nome || req.usuario.nome_completo || req.usuario.username,
-        setor || 'Almoxarifado ServMil',
+        setor || 'Almoxarifado Inteligente',
         observacao.trim()
       );
 
@@ -1595,7 +1595,7 @@ app.post('/api/estoque', (req, res) => {
       Number(quantidade_atual) || 0,
       Number(quantidade_minima) || 20,
       (unidade_medida || 'UN').toUpperCase().trim(),
-      localizacao || 'Almoxarifado ServMil',
+      localizacao || 'Almoxarifado Inteligente',
       Number(preco_estimado) || 0.0
     );
 
@@ -2042,8 +2042,8 @@ app.post('/api/compras', (req, res) => {
       item.quantidade_atual,
       Number(quantidade_solicitada) || 100,
       urgencia || 'ALTA',
-      solicitante || 'Almoxarifado ServMil',
-      setor || 'Almoxarifado ServMil',
+      solicitante || 'Almoxarifado Inteligente',
+      setor || 'Almoxarifado Inteligente',
       observacao ||
         `Disparo automático de reposição. Saldo atual: ${item.quantidade_atual} ${item.unidade_medida}`
     );
@@ -2237,7 +2237,7 @@ app.post('/api/alertas/disparar-multiplo', (req, res) => {
       if (!item) return res.status(404).json({ erro: 'Item não encontrado' });
       titulo = `🚨 ALERTA CRÍTICO: ESTOQUE BAIXO - ${item.nome}`;
       corpoMensagem =
-        `*SERVMIL - ALERTA DE ALMOXARIFADO*\n\n` +
+        `*ALMOXARIFADO INTELIGENTE - ALERTA DE ALMOXARIFADO*\n\n` +
         `📦 *Item:* ${item.nome}\n` +
         `🔖 *ID/Código:* ${item.codigo_id}\n` +
         `📍 *Localização:* ${item.localizacao}\n` +
@@ -2252,7 +2252,7 @@ app.post('/api/alertas/disparar-multiplo', (req, res) => {
       const equipEnriquecido = enriquecerEquipamento(equip);
       titulo = `⚡ ALERTA DE METROLOGIA: CALIBRAÇÃO - ${equip.nome}`;
       corpoMensagem =
-        `*SERVMIL - ALERTA DE CALIBRAÇÃO*\n\n` +
+        `*ALMOXARIFADO INTELIGENTE - ALERTA DE CALIBRAÇÃO*\n\n` +
         `🔬 *Equipamento:* ${equip.nome}\n` +
         `🏷️ *Patrimônio:* ${equip.tag_patrimonio}\n` +
         `⚙️ *Modelo:* ${equip.fabricante} ${equip.modelo}\n` +
@@ -2329,7 +2329,7 @@ setInterval(podarRegistrosPesados, 6 * 60 * 60 * 1000);
 // Inicia servidor (encapsulado no localhost: só o ngrok/túnel ou o próprio PC acessam)
 app.listen(PORT, '127.0.0.1', () => {
   console.log(`====================================================`);
-  console.log(`⚡ SERVMIL // SISTEMA DE ALMOXARIFADO & CALIBRAÇÃO`);
+  console.log(`⚡ ALMOXARIFADO INTELIGENTE // SISTEMA DE ESTOQUE & CALIBRAÇÃO`);
   console.log(`Servidor ativo em: http://localhost:${PORT}`);
   console.log(`Banco de dados: voltstock.db (SQLite nativo)`);
   console.log(`[Segurança] Porta restrita ao localhost + rate limit + headers ativos`);
