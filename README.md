@@ -1,300 +1,392 @@
-# 🏭 Almoxarifado Inteligente — Smart Inventory Management System
+# 🏭 Almoxarifado Inteligente — Intelligent Warehouse Management System
 
-[![Node.js](https://img.shields.io/badge/Node.js-22.13%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-24.x-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Express](https://img.shields.io/badge/Express-5.x-000000?logo=express&logoColor=white)](https://expressjs.com/)
 [![SQLite](https://img.shields.io/badge/SQLite-3.x-003B57?logo=sqlite&logoColor=white)](https://sqlite.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](Dockerfile)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Security](https://img.shields.io/badge/Security-Hardened-brightgreen)](SECURITY.md)
 [![CI](https://github.com/VictorHugoEng/AlmoxarifadoProject/actions/workflows/ci.yml/badge.svg)](https://github.com/VictorHugoEng/AlmoxarifadoProject/actions/workflows/ci.yml)
 
-> A production-grade inventory ("almoxarifado") system built with **Node.js and SQLite**.
-> Stock control, equipment calibration, purchase requests, private chat and a full audit
-> trail — with **automatic cloud backup** (Google Drive) and **over-the-air updates**,
-> designed for real industrial environments where **losing data is not an option**.
+> **Enterprise modular monolith**: robust authentication, RBAC, local + Google Drive backups, automatic recovery, private chat, immutable audit trail and over-the-air updates. Built for critical environments where **data loss is not an option**.
 
-🇧🇷 [Leia em Português (BR)](README.pt-BR.md)
+🇧🇷 [Leia em Português](README.pt-BR.md)
 
 ---
 
-## Screenshots
+## 🎯 Overview
+
+| Feature           | Description                                                              |
+| ----------------- | ------------------------------------------------------------------------ |
+| **Domain**        | Industrial / corporate warehouse + metrology                             |
+| **Architecture**  | Modular monolith in `src/` (routes, services, isolated database drivers) |
+| **Database**      | Native SQLite (`node:sqlite`, WAL) **or** PostgreSQL 16 (plug-in driver) |
+| **Auth**          | 256-bit tokens + scrypt + rate limiting + brute-force protection         |
+| **RBAC**          | `ADMIN_MASTER`, `OPERADOR`, `COMPRAS`, `CONSULTA`                        |
+| **Backup**        | Local (30 days) + Google Drive (continuous) + automatic boot recovery    |
+| **Chat**          | 1-to-1 messages with images stored in DB + notifications                 |
+| **OTA Updates**   | Over-the-air via Google Drive (code + version)                           |
+| **Observability** | Full audit trail + `/healthz` for platforms                              |
+| **Deploy**        | Docker, Render (blueprint), PM2, Systemd                                 |
+
+---
+
+## 📸 Screenshots
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/screenshots/dashboard.png" alt="Dashboard"><br><sub><b>Dashboard</b> — key metrics and low-stock alerts</sub></td>
-    <td width="50%"><img src="docs/screenshots/estoque.png" alt="Inventory"><br><sub><b>Inventory</b> — items, categories and critical-level alerts</sub></td>
+    <td width="50%"><img src="docs/screenshots/dashboard.png" alt="Dashboard"><br><sub><b>Dashboard</b> — indicators and critical stock alerts</sub></td>
+    <td width="50%"><img src="docs/screenshots/estoque.png" alt="Inventory"><br><sub><b>Warehouse</b> — items, categories and critical level</sub></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/calibracao.png" alt="Calibration"><br><sub><b>Calibration</b> — equipment and expiry tracking</sub></td>
-    <td><img src="docs/screenshots/compras.png" alt="Purchase requests"><br><sub><b>Purchase requests</b> — status workflow and buyer feedback</sub></td>
+    <td><img src="docs/screenshots/calibracao.png" alt="Calibration"><br><sub><b>Metrology</b> — equipment and expirations</sub></td>
+    <td><img src="docs/screenshots/compras.png" alt="Purchasing"><br><sub><b>Purchasing</b> — status flow and feedback</sub></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/chat.png" alt="Private chat"><br><sub><b>Private chat</b> — 1-to-1 messages with attachments</sub></td>
-    <td><img src="docs/screenshots/administrador.png" alt="Admin"><br><sub><b>Admin</b> — users, roles, audit log and backups</sub></td>
+    <td><img src="docs/screenshots/chat.png" alt="Chat"><br><sub><b>Chat</b> — 1-to-1 messages with attachments</sub></td>
+    <td><img src="docs/screenshots/administrador.png" alt="Admin"><br><sub><b>Admin</b> — users, audit and backup</sub></td>
   </tr>
 </table>
 
-## Why this project
+---
 
-This is not a tutorial clone — it is a **system running in production** for a small
-industrial operation. It was built to solve real constraints:
-
-- **No dedicated IT / no server budget** — it runs on an ordinary Windows PC.
-- **Unreliable environments** — power/internet can drop, so the database is backed up
-  locally _and_ to the cloud, and the system recovers automatically on boot.
-- **Non-technical users** — the whole app is a PWA installed from a link on their phone.
-- **Remote access** — users connect from outside the network over an HTTPS tunnel.
-
-## Tech Stack
-
-| Layer          | Technology                                                |
-| -------------- | --------------------------------------------------------- |
-| Runtime        | Node.js 22.13+ (CI on Node 24)                            |
-| Web framework  | Express 5                                                 |
-| Database       | SQLite via the built-in `node:sqlite` module (WAL mode)   |
-| Authentication | scrypt password hashing + 256-bit Bearer session tokens   |
-| Frontend       | Vanilla JS SPA + Service Worker (PWA), Tailwind CSS (CDN) |
-| Cloud          | Google Drive API (OAuth 2.0) for backup & OTA updates     |
-| Extras         | Optional LibreOffice microservice for PDF export          |
-| Quality        | ESLint, Prettier, Husky, `node:test`, GitHub Actions CI   |
-
-## Architecture
+## 🏗️ Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                     CLIENT (Browser / PWA)                       │
-│   Vanilla JS SPA + Service Worker (app-shell cache) + localStorage│
-└───────────────────────────────┬──────────────────────────────────┘
-                                │ HTTPS (HTTP polling)
-                                ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                    NODE.JS SERVER (Express 5)                    │
-│  ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────────┐     │
-│  │   Auth    │ │ Inventory │ │   Chat    │ │     Admin     │     │
-│  └─────┬─────┘ └─────┬─────┘ └─────┬─────┘ └───────┬───────┘     │
-│        └─────────────┴─────────────┴───────────────┘             │
-│                              ▼                                    │
-│          Middleware: Rate Limit → Auth → RBAC → Audit → Cloud    │
-│                              ▼                                    │
-│           SQLite (WAL + synchronous=FULL, ACID, auto-checkpoint) │
-│                              ▼                                    │
-│        Local backups (30 copies) · Google Drive · Boot recovery  │
-└──────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────┐
+│                    CLIENT (Browser / PWA)                         │
+│           Vanilla JS  +  Service Worker  +  localStorage          │
+└──────────────────────────────┬────────────────────────────────────┘
+                               │ HTTPS (polling)
+                               ▼
+┌───────────────────────────────────────────────────────────────────┐
+│              NODE.JS 24 — EXPRESS 5  (src/)                       │
+│                                                                   │
+│  src/app.js        middleware pipeline + route mounting           │
+│  src/index.js      entry: database → services → listen            │
+│  src/routes/       auth, usuarios, estoque, equipamentos,         │
+│                    compras, chat, notificacoes, nuvem (+OTA)      │
+│  src/database.js   schema, crypto, seed, migrations, recovery     │
+│  src/db/drivers/   sqlite.js  │  postgres.js  (same interface)    │
+│  src/nuvem.js      Google Drive OAuth + continuous backup + OTA   │
+│  src/backup.js     scheduled local backups + history              │
+│  src/auth.js       sessions, RBAC, security logs                  │
+│  src/middlewares.js rate limit + headers + parsers                │
+│  src/helpers.js    data enrichment + utilities                    │
+│                                                                   │
+│      ▼ auth  →  ▼ rate limit  →  ▼ routes (with audit log)       │
+└──────────────────────────────┬────────────────────────────────────┘
+                               │
+                  ┌────────────┴─────────────┐
+                  ▼                          ▼
+        ┌─────────────────┐       ┌────────────────────┐
+        │    SQLite WAL   │       │     PostgreSQL     │
+        │   (native)      │       │  16 (pg, plug-in)  │
+        └────────▲────────┘       └─────────┬──────────┘
+                 │                          │
+        Local backups (30d)       (local backups SQLite-only)
+        Google Drive (continuous) OTA and cloud sync unchanged
+        Boot-time auto-recovery
 ```
 
-## Features
+**Single DB interface:** `src/db/` exposes `exec()` + `prepare()` (with `run/get/all`)
+for **any** engine. Routes do not know whether the database is SQLite or PostgreSQL —
+just change `DB_DRIVER` and set `DATABASE_URL`.
 
-- **Inventory** — items, categories, low-stock alerts, filters and search.
-- **Equipment & metrology** — calibration status and expiration tracking.
-- **Purchase requests** — request workflow with status (`PENDING`, `QUOTING`, `FULFILLED`).
-- **Private chat** — 1:1 conversations with image attachments and unread badges.
-- **Admin & audit** — user/role management, password reset, account unlock, and a
-  security audit log (logins, RBAC changes, sensitive CRUD, backups).
-- **Cloud backup** — continuous sync to Google Drive + manual backup/restore.
-- **Over-the-air updates** — new versions are published to Drive and applied from the
-  admin panel; the server restarts itself while keeping data intact.
-- **PWA** — installable on Android/iOS from the browser, with an offline app shell.
+---
 
-## Security
-
-| Layer             | Implementation                                                               |
-| ----------------- | ---------------------------------------------------------------------------- |
-| **Passwords**     | scrypt key derivation (64-byte key, 16-byte random salt) + `timingSafeEqual` |
-| **Sessions**      | 256-bit tokens (`crypto.randomBytes(32)`) with configurable expiry           |
-| **Rate limiting** | Per route: login `10/min` (15-min block on abuse), API `120/min`             |
-| **Brute force**   | Account lockout after `5` failed attempts for `15` minutes                   |
-| **Headers**       | Strict CSP, HSTS, `X-Frame-Options`, `Permissions-Policy`                    |
-| **Recovery**      | Automatic restore: local backup → cloud → fresh database                     |
-
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- **Node.js 22.13+** (Node 24 LTS recommended — `node:sqlite` is a built-in module)
+- **Node.js 24** (uses `node:sqlite` for the default driver; supported range: `>=22.13`)
 - **npm 10+**
+- Google Cloud account (only for Google Drive sync)
 
-### Run locally
+### Local Installation
 
 ```bash
 git clone https://github.com/VictorHugoEng/AlmoxarifadoProject.git
 cd AlmoxarifadoProject
+
 npm ci
 npm start
 # Server running at http://localhost:3000
 ```
 
-### Default credentials (first run)
+### Default Credentials (first run)
 
 ```
 Username: anderson
-Password: 123456      # local default
+Password: 123456   (change via ALMOX_ADMIN_PASSWORD or the admin panel)
 Role:     ADMIN_MASTER
 ```
 
 > ⚠️ **Change the password immediately after the first login.**
 
-## Configuration
+---
 
-### Environment variables
+## ⚙️ Configuration
 
-| Variable               | Default               | Purpose                                                  |
-| ---------------------- | --------------------- | -------------------------------------------------------- |
-| `PORT`                 | `3000`                | HTTP port                                                |
-| `HOST`                 | `127.0.0.1`           | Bind address (`0.0.0.0` in containers/PaaS)              |
-| `ALMOX_DB_PATH`        | `./voltstock.db`      | Custom database path (also isolates boot-time recovery)  |
-| `ALMOX_CONFIG_PATH`    | `./nuvem_config.json` | Custom Google Drive credentials file path                |
-| `ALMOX_ADMIN_PASSWORD` | `123456`              | Initial admin password (first run only; change it)       |
-| `ALMOX_NO_RECOVER`     | _(unset)_             | `1` disables boot-time recovery (used by isolated tests) |
+Copy and edit `.env.example`; the variables below drive the system:
 
-Google Drive credentials are **not** environment variables — they are configured through
-the admin UI and stored in `nuvem_config.json` (kept out of version control).
+| Variable               | Default               | Description                                               |
+| ---------------------- | --------------------- | --------------------------------------------------------- |
+| `PORT`                 | `3000`                | HTTP port (injected by Render in production)              |
+| `HOST`                 | `127.0.0.1`           | Local listen; use `0.0.0.0` in containers / PaaS          |
+| `DB_DRIVER`            | `sqlite`              | Engine: `sqlite` or `postgres`                            |
+| `DATABASE_URL`         | `''`                  | Connection URL `postgres://user:pass@host:5432/db` (pg)   |
+| `ALMOX_DB_PATH`        | `./voltstock.db`      | SQLite file (setting it disables boot recovery)           |
+| `ALMOX_CONFIG_PATH`    | `./nuvem_config.json` | Google credentials file (gitignored)                      |
+| `ALMOX_ADMIN_PASSWORD` | `123456`              | Initial admin password (first boot only; idempotent seed) |
+| `ALMOX_NO_RECOVER`     | —                     | Set `1` to disable automatic backup recovery (tests)      |
 
-### Google Drive sync (production)
+> Google Drive credentials are **not** environment variables: you enter them in
+> **Admin → Cloud** and the system stores them in `nuvem_config.json` (gitignored).
 
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
-2. Create a project → **APIs & Services** → enable **Google Drive API**.
-3. **Credentials** → **OAuth 2.0 Client ID** (Application type: _Web_).
-4. Authorized redirect URI: `https://YOUR-DOMAIN/api/nuvem/oauth2/callback`.
-5. In the app: **Admin → Cloud** → paste Client ID/Secret → **Connect**.
-
-## API Reference
-
-### Authentication
-
-| Method | Endpoint      | Description                  |
-| ------ | ------------- | ---------------------------- |
-| `POST` | `/api/login`  | Login (rate limited: 10/min) |
-| `GET`  | `/api/sessao` | Validate an active session   |
-| `POST` | `/api/logout` | End the session              |
-
-### Inventory
-
-| Method   | Endpoint                  | RBAC         | Description                                          |
-| -------- | ------------------------- | ------------ | ---------------------------------------------------- |
-| `GET`    | `/api/estoque`            | All          | List items (`busca`, `categoria`, `apenas_criticos`) |
-| `POST`   | `/api/estoque`            | OPERADOR+    | Create item                                          |
-| `PUT`    | `/api/estoque/:id`        | OPERADOR+    | Update item                                          |
-| `DELETE` | `/api/estoque/:id`        | ADMIN_MASTER | Delete item                                          |
-| `GET`    | `/api/estoque/categorias` | All          | List categories                                      |
-| `POST`   | `/api/estoque/categorias` | ADMIN_MASTER | Create category                                      |
-
-### Equipment / Metrology
-
-| Method   | Endpoint                | RBAC         | Description                  |
-| -------- | ----------------------- | ------------ | ---------------------------- |
-| `GET`    | `/api/equipamentos`     | All          | List with calibration status |
-| `POST`   | `/api/equipamentos`     | OPERADOR+    | Create equipment             |
-| `PUT`    | `/api/equipamentos/:id` | OPERADOR+    | Update                       |
-| `DELETE` | `/api/equipamentos/:id` | ADMIN_MASTER | Delete                       |
-
-### Purchases
-
-| Method  | Endpoint                    | RBAC      | Description    |
-| ------- | --------------------------- | --------- | -------------- |
-| `GET`   | `/api/compras`              | All       | List requests  |
-| `POST`  | `/api/compras`              | OPERADOR+ | Create request |
-| `PATCH` | `/api/compras/:id/status`   | COMPRAS+  | Update status  |
-| `PATCH` | `/api/compras/:id/feedback` | COMPRAS+  | Buyer feedback |
-
-### Private chat
-
-| Method | Endpoint                   | Description                            |
-| ------ | -------------------------- | -------------------------------------- |
-| `GET`  | `/api/chat/contatos`       | Contacts + last message + unread count |
-| `GET`  | `/api/chat/:id`            | Conversation history                   |
-| `POST` | `/api/chat/:id`            | Send message/image                     |
-| `POST` | `/api/chat/:id/lidas`      | Mark as read                           |
-| `GET`  | `/api/chat/naolidas/total` | Total unread badge                     |
-
-### Admin / Audit
-
-| Method   | Endpoint                        | RBAC         | Description                 |
-| -------- | ------------------------------- | ------------ | --------------------------- |
-| `GET`    | `/api/usuarios`                 | ADMIN_MASTER | List users                  |
-| `POST`   | `/api/usuarios`                 | ADMIN_MASTER | Create user                 |
-| `PUT`    | `/api/usuarios/:id`             | ADMIN_MASTER | Edit user/role/password     |
-| `DELETE` | `/api/usuarios/:id`             | ADMIN_MASTER | Delete user                 |
-| `POST`   | `/api/usuarios/:id/desbloquear` | ADMIN_MASTER | Unlock brute-forced account |
-| `GET`    | `/api/auditoria`                | ADMIN_MASTER | Security logs (last 200)    |
-| `POST`   | `/api/backup`                   | ADMIN_MASTER | Manual backup               |
-| `GET`    | `/api/backup/status`            | ADMIN_MASTER | Backup status               |
-
-### Cloud (Google Drive)
-
-| Method | Endpoint               | RBAC         | Description         |
-| ------ | ---------------------- | ------------ | ------------------- |
-| `GET`  | `/api/nuvem/status`    | Public       | Connection status   |
-| `GET`  | `/api/nuvem/login`     | Public       | Google OAuth        |
-| `POST` | `/api/nuvem/config`    | ADMIN_MASTER | Save credentials    |
-| `POST` | `/api/nuvem/enviar`    | ADMIN_MASTER | Upload backup now   |
-| `POST` | `/api/nuvem/restaurar` | ADMIN_MASTER | Download from cloud |
-
-### Over-the-air updates
-
-| Method | Endpoint                   | RBAC         | Description            |
-| ------ | -------------------------- | ------------ | ---------------------- |
-| `GET`  | `/api/atualizacao/status`  | ADMIN_MASTER | Check remote version   |
-| `POST` | `/api/atualizacao/aplicar` | ADMIN_MASTER | Apply update + restart |
-
-## Testing & Quality
+### Switching to PostgreSQL
 
 ```bash
-npm test           # Smoke tests (node:test)
-npm run lint       # ESLint
-npm run format:check  # Prettier
-npm run audit      # npm audit (high severity)
+DB_DRIVER=postgres DATABASE_URL=postgres://usr:pass@host:5432/almox npm start
 ```
 
-The smoke suite (`test/smoke.test.js`) boots the real server against an **isolated
-temporary database** and asserts the app shell loads plus the login/version endpoints
-respond correctly. The same checks run in CI on every pull request.
+On the first boot the system creates the full schema (tables, indexes, `BIGSERIAL` / `BYTEA`
+types), runs migrations and the idempotent seed — all automatically.
 
-## Project Structure
+Run the test suite against PostgreSQL the same way (the CI does this on every push):
+
+```bash
+DB_DRIVER=postgres DATABASE_URL=postgres://usr:pass@host:5432/almox npm test
+```
+
+> **Note:** local backups + auto-recovery are SQLite-only. With PostgreSQL, Google Drive
+> sync and OTA updates continue to work as normal.
+
+### Google Drive Sync (production)
+
+1. Visit the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a project → APIs → **Google Drive API** → Enable
+3. Credentials → **OAuth 2.0 Client ID** (Application type: Web)
+4. Authorized redirect URIs: `https://YOUR-DOMAIN/api/nuvem/oauth2/callback`
+5. In the system: **Admin → Cloud** → paste Client ID/Secret → **Connect**
+
+---
+
+## 📚 API Reference
+
+Specification (OpenAPI 3.0): [`docs/api/openapi.yaml`](docs/api/openapi.yaml) — validate with `npx redocly lint docs/api/openapi.yaml`.
+
+All routes live under `/api` (mounted in `src/app.js`). Sensitive mutations
+are automatically recorded in the security audit trail.
+
+### Authentication & Session
+
+| Method | Endpoint      | Description                       |
+| ------ | ------------- | --------------------------------- |
+| `POST` | `/api/login`  | Login (rate limit: 10/min per IP) |
+| `GET`  | `/api/sessao` | Validate active session           |
+| `POST` | `/api/logout` | End session                       |
+
+### Inventory & Categories
+
+| Method   | Endpoint                     | RBAC          | Description                                             |
+| -------- | ---------------------------- | ------------- | ------------------------------------------------------- |
+| `GET`    | `/api/estoque`               | authenticated | List / filter (`busca`, `categoria`, `apenas_criticos`) |
+| `POST`   | `/api/estoque`               | authenticated | Create item (unique code)                               |
+| `PATCH`  | `/api/estoque/:id/movimento` | authenticated | `{ delta }` moves stock + logs history + fires alerts   |
+| `PUT`    | `/api/estoque/:id`           | authenticated | Edit item                                               |
+| `DELETE` | `/api/estoque/:id`           | ADMIN_MASTER  | Delete item                                             |
+| `GET`    | `/api/categorias`            | authenticated | List categories                                         |
+| `POST`   | `/api/categorias`            | ADMIN_MASTER  | Create category                                         |
+| `PUT`    | `/api/categorias/:id`        | ADMIN_MASTER  | Rename category                                         |
+| `DELETE` | `/api/categorias/:id`        | ADMIN_MASTER  | Delete category                                         |
+
+### Equipment & Calibration (Metrology)
+
+| Method   | Endpoint                | RBAC          | Description                  |
+| -------- | ----------------------- | ------------- | ---------------------------- |
+| `GET`    | `/api/equipamentos`     | authenticated | List with calibration status |
+| `POST`   | `/api/equipamentos`     | authenticated | Register equipment           |
+| `PUT`    | `/api/equipamentos/:id` | authenticated | Update / renew calibration   |
+| `DELETE` | `/api/equipamentos/:id` | ADMIN_MASTER  | Delete equipment             |
+
+### Purchasing, Recipients & Alerts
+
+| Method  | Endpoint                         | RBAC          | Description                    |
+| ------- | -------------------------------- | ------------- | ------------------------------ |
+| `GET`   | `/api/compras`                   | authenticated | List purchase requests         |
+| `POST`  | `/api/compras`                   | authenticated | New request + alert            |
+| `PATCH` | `/api/compras/:id/status`        | COMPRAS+      | Update status                  |
+| `PATCH` | `/api/compras/:id/feedback`      | COMPRAS+      | Purchasing department feedback |
+| `GET`   | `/api/destinatarios`             | authenticated | List alert recipients          |
+| `PUT`   | `/api/destinatarios/:id`         | authenticated | Edit recipient                 |
+| `GET`   | `/api/alertas/resumo`            | authenticated | Active alerts summary          |
+| `POST`  | `/api/alertas/disparar-multiplo` | authenticated | Fire batch alerts              |
+
+### Private Chat
+
+| Method | Endpoint                   | Description                      |
+| ------ | -------------------------- | -------------------------------- |
+| `GET`  | `/api/chat/contatos`       | Contacts + last message + unread |
+| `GET`  | `/api/chat/:id`            | Conversation history             |
+| `POST` | `/api/chat/:id`            | Send text/photo (up to 12 MB)    |
+| `POST` | `/api/chat/:id/lidas`      | Mark as read                     |
+| `GET`  | `/api/chat/naolidas/total` | Unread badge count               |
+| `GET`  | `/api/chat/midia/:id`      | Serve image (random public id)   |
+
+### Notifications & Observations
+
+| Method   | Endpoint                      | Description                   |
+| -------- | ----------------------------- | ----------------------------- |
+| `GET`    | `/api/notificacoes`           | User notifications            |
+| `POST`   | `/api/notificacoes/lidas`     | Mark read (`{ ids }` or `{}`) |
+| `GET`    | `/api/observacoes`            | List observations             |
+| `POST`   | `/api/observacoes`            | Create observation            |
+| `DELETE` | `/api/observacoes/:id`        | Remove observation            |
+| `PATCH`  | `/api/observacoes/:id/status` | Resolve observation           |
+
+### Admin: Users & Audit
+
+| Method   | Endpoint                        | RBAC         | Description                  |
+| -------- | ------------------------------- | ------------ | ---------------------------- |
+| `GET`    | `/api/usuarios`                 | ADMIN_MASTER | List users                   |
+| `POST`   | `/api/usuarios`                 | ADMIN_MASTER | Create user / RBAC           |
+| `PUT`    | `/api/usuarios/:id`             | ADMIN_MASTER | Edit / role / reset password |
+| `DELETE` | `/api/usuarios/:id`             | ADMIN_MASTER | Delete (last-admin guard)    |
+| `POST`   | `/api/usuarios/:id/desbloquear` | ADMIN_MASTER | Unlock brute-force lock      |
+| `GET`    | `/api/auditoria`                | ADMIN_MASTER | Last 200 security events     |
+
+### Cloud, Backup & OTA
+
+| Method | Endpoint                     | RBAC          | Description                          |
+| ------ | ---------------------------- | ------------- | ------------------------------------ |
+| `GET`  | `/api/nuvem/status`          | public        | Connection state (login screen)      |
+| `GET`  | `/api/nuvem/login`           | public        | Redirects to Google OAuth            |
+| `GET`  | `/api/nuvem/oauth2/callback` | public        | Google return                        |
+| `POST` | `/api/nuvem/config`          | ADMIN_MASTER  | Save credentials                     |
+| `POST` | `/api/nuvem/desconectar`     | ADMIN_MASTER  | Disconnect Google account            |
+| `POST` | `/api/nuvem/enviar`          | ADMIN_MASTER  | Push backup to cloud now             |
+| `POST` | `/api/nuvem/restaurar`       | ADMIN_MASTER  | Download latest from cloud           |
+| `POST` | `/api/backup`                | ADMIN_MASTER  | Manual backup                        |
+| `GET`  | `/api/backup/status`         | ADMIN_MASTER  | Backup locations and history         |
+| `GET`  | `/api/atualizacao/status`    | ADMIN_MASTER  | Current version vs cloud version     |
+| `POST` | `/api/atualizacao/aplicar`   | ADMIN_MASTER  | Apply OTA package + restart          |
+| `GET`  | `/api/versao`                | authenticated | App version (triggers client reload) |
+| `GET`  | `/healthz`                   | public        | Health check for platforms (uptime)  |
+
+---
+
+## 🛡️ Security (Hardening)
+
+| Layer           | Implementation                                                 |
+| --------------- | -------------------------------------------------------------- |
+| **Passwords**   | scrypt (N=16384, r=8, p=1) + 16-byte salt + `timingSafeEqual`  |
+| **Sessions**    | 256-bit token (`crypto.randomBytes`) + configurable expiry     |
+| **Rate Limit**  | Per-IP and per-route (login 10/min, general API 120/min)       |
+| **Brute Force** | 15-minute lockout after 5 failures + audit trail               |
+| **Headers**     | Strict CSP, HSTS, X-Frame-Options, Permissions-Policy          |
+| **Uploads**     | Chat images stored as bytes in DB (4 MB / 250 MB total cap)    |
+| **Audit**       | Immutable log: logins, RBAC changes, critical CRUD, cloud, OTA |
+| **Recovery**    | Auto-restore local → cloud → fresh DB at boot                  |
+
+---
+
+## 🧪 Code Quality
+
+```bash
+npm run lint          # ESLint
+npm run format        # Prettier (writes)
+npm run format:check  # Prettier (checks)
+npm test              # Smoke test: server boot + login + healthz
+npm audit             # Dependency audit
+```
+
+The CI pipeline [`ci.yml`](.github/workflows/ci.yml) runs lint → format → audit →
+tests → syntax verification on every push / PR to `main` and `develop`.
+
+---
+
+## 📦 Project Structure
 
 ```
 AlmoxarifadoProject/
-├── server.js              # Entry point: routes + middleware pipeline
-├── database.js            # SQLite schema, crypto, migrations, boot recovery
-├── nuvem.js               # Google Drive OAuth + backup sync + version check
-├── package.json
-├── .github/
-│   ├── workflows/ci.yml   # CI/CD pipeline
-│   ├── ISSUE_TEMPLATE/    # Bug report, feature request
-│   └── PULL_REQUEST_TEMPLATE.md
-├── public/                # Frontend (PWA)
-│   ├── index.html
-│   ├── login.html
-│   ├── app.js
-│   ├── style.css
-│   ├── sw.js              # Service Worker (app-shell cache)
-│   └── manifest.webmanifest
+├── src/                      # ⭐ Source (all logic lives here)
+│   ├── index.js              # Entry: database → services → listen
+│   ├── app.js                # Express: middleware pipeline + routes
+│   ├── config.js             # Centralized env config
+│   ├── database.js           # Schema, crypto, migrations, seed, recovery
+│   ├── auth.js               # Sessions, RBAC, security audit
+│   ├── middlewares.js        # Rate limit, headers, body parsers
+│   ├── helpers.js            # Utilities and data enrichment
+│   ├── backup.js             # Scheduled local backups
+│   ├── nuvem.js              # Google Drive OAuth + OTA
+│   ├── db/
+│   │   ├── index.js          # Driver selection (sqlite | postgres)
+│   │   ├── schema-sqlite.js  # SQLite DDL
+│   │   ├── schema-postgres.js# PostgreSQL DDL (BIGSERIAL/BYTEA/tz)
+│   │   └── drivers/
+│   │       ├── sqlite.js     # async exec/prepare over node:sqlite
+│   │       └── postgres.js   # same interface over pg (Pool)
+│   └── routes/               # One module per domain (express.Router)
+│       ├── auth.js ├── usuarios.js ├── estoque.js
+│       ├── equipamentos.js ├── compras.js ├── chat.js
+│       ├── notificacoes.js └── nuvem.js
+├── public/                   # Static frontend (offline-first PWA)
+│   ├── index.html ├── login.html ├── app.js
+│   ├── style.css ├── sw.js └── manifest.webmanifest
 ├── test/
-│   └── smoke.test.js      # Boot + login + version smoke test
-├── docs/screenshots/      # Application screenshots
-├── converte-para-pdf/     # Optional PDF microservice
-└── backups/               # Local backups (gitignored)
+│   └── smoke.test.js         # Smoke: boot + login + public endpoints
+├── .github/workflows/ci.yml  # Full CI/CD pipeline
+├── Dockerfile                # Node 24 Alpine image + HEALTHCHECK
+├── render.yaml               # Render blueprint (1-click deploy)
+├── .env.example              # Documented environment variables
+└── backups/                  # Local backups (gitignored)
 ```
 
-## Deployment
+---
 
-### PM2 (recommended on a VPS)
+## 🚢 Production Deployment
 
-```bash
-npm install -g pm2
-pm2 start server.js --name almoxarifado
-pm2 startup
-pm2 save
-```
-
-### Docker (any provider)
-
-A ready-to-use [`Dockerfile`](Dockerfile) is included:
+### Docker (any cloud)
 
 ```bash
 docker build -t almoxarifado .
-docker run -d -p 3000:3000 -e ALMOX_ADMIN_PASSWORD=change-me almoxarifado
+docker run -d -p 3000:3000 \
+  -e ALMOX_ADMIN_PASSWORD=change-me \
+  -v almox_data:/app \
+  almoxarifado
 ```
 
-### systemd (Linux)
+The image ships with a `HEALTHCHECK` and is the base for Render deployments.
+
+### Render (blueprint included)
+
+The file [`render.yaml`](render.yaml) enables **1-click deploy**:
+
+> `https://render.com/deploy?repo=https://github.com/VictorHugoEng/AlmoxarifadoProject`
+
+- Runtime: Docker (deterministic image from `Dockerfile`)
+- Health check: `/healthz`
+- Env vars: `NODE_ENV`, `HOST`, `ALMOX_ADMIN_PASSWORD`
+- Free plan with automatic Web Service renewal
+
+> 💡 **SQLite on Render free is ephemeral** (no persistent disk). For permanent
+> cloud data, connect a managed PostgreSQL:
+
+```bash
+DB_DRIVER=postgres DATABASE_URL=postgres://...:5432/almox
+```
+
+### PM2 (VPS)
+
+```bash
+npm install -g pm2
+pm2 start src/index.js --name almoxarifado
+pm2 startup && pm2 save
+```
+
+### Systemd (Linux)
 
 ```ini
 # /etc/systemd/system/almoxarifado.service
@@ -306,7 +398,7 @@ After=network.target
 Type=simple
 User=almox
 WorkingDirectory=/opt/almoxarifado
-ExecStart=/usr/bin/node server.js
+ExecStart=/usr/bin/node src/index.js
 Restart=on-failure
 Environment=NODE_ENV=production
 
@@ -314,27 +406,36 @@ Environment=NODE_ENV=production
 WantedBy=multi-user.target
 ```
 
-## Contributing
+---
 
-1. Fork the project.
-2. Create a branch: `git checkout -b feature/my-feature`.
-3. Commit following **Conventional Commits** (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`).
-4. Push and open a Pull Request (CI must pass).
+## 🤝 Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+1. Fork the project
+2. Create a branch: `git checkout -b feature/new-feature`
+3. Conventional commit: `git commit -m 'feat: add new feature'`
+4. Push: `git push origin feature/new-feature`
+5. Open a Pull Request
 
-## License
+### Commit Patterns (Conventional Commits)
+
+`feat:` · `fix:` · `docs:` · `refactor:` · `test:` · `chore:` · `security:`
+
+---
+
+## 📄 License
 
 MIT License — see [LICENSE](LICENSE).
 
-## Author
+---
 
-**Victor Hugo** — Software Engineering student
+## 👨‍💻 Author
+
+**Victor Hugo** — Software Engineer
 
 - GitHub: [@VictorHugoEng](https://github.com/VictorHugoEng)
 - LinkedIn: [victorhugoeng](https://linkedin.com/in/victorhugoeng)
 
 ---
 
-> Built with an enterprise mindset for real production use.
+> **Built with enterprise standards for production.**  
 > _Zero data loss. Zero downtime. Zero excuses._

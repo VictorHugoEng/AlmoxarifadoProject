@@ -1,0 +1,855 @@
+openapi: 3.0.3
+info:
+  title: Almoxarifado Inteligente — API
+  version: 1.0.0
+  description: |
+    API REST do sistema de gestão de almoxarifado industrial. Autenticação por
+    Bearer token (256-bit) com RBAC (ADMIN_MASTER, OPERADOR, COMPRAS, CONSULTA),
+    rate limiting por IP, auditoria automática de mutações sensíveis e backups
+    locais + Google Drive.
+
+    **Autenticação:** faça `POST /api/login` e envie `Authorization: Bearer <token>`.
+    Rota pública de health: `GET /healthz`.
+  license:
+    name: MIT
+    url: https://github.com/VictorHugoEng/AlmoxarifadoProject/blob/main/LICENSE
+  contact:
+    name: Victor Hugo Eng
+    url: https://github.com/VictorHugoEng
+
+servers:
+  - url: http://localhost:3000
+    description: Desenvolvimento local
+  - url: https://almoxarifado.onrender.com
+    description: Produção (Render)
+
+tags:
+  - name: Saúde
+    description: Health checks públicos
+  - name: Autenticação
+    description: Login, validação de sessão e logout
+  - name: Estoque
+    description: Itens de almoxarifado e categorias
+  - name: Metrologia
+    description: Equipamentos e calibração
+  - name: Compras
+    description: Solicitações, destinatários e alertas
+  - name: Chat
+    description: Mensagens 1-a-1 entre usuários
+  - name: Notificações
+    description: Sininho e observações
+  - name: Administração
+    description: Usuários, RBAC e auditoria
+  - name: Nuvem e Backup
+    description: Google Drive, backups locais e atualização OTA
+
+paths:
+  /healthz:
+    get:
+      tags: [Saúde]
+      summary: Health check para plataformas (Render, Docker, etc.)
+      security: []
+      responses:
+        '200':
+          description: Servidor saudável
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  uptime: { type: number, example: 1234.56 }
+
+  /api/login:
+    post:
+      tags: [Autenticação]
+      summary: Autentica e retorna o token de sessão
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, senha]
+              properties:
+                username: { type: string, example: anderson }
+                senha: { type: string, example: '123456' }
+                lembrar_me: { type: boolean, description: Sessão de 30 dias (padrão 12h) }
+      responses:
+        '200':
+          description: Login OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string, example: 9f86d081884c7d659a2feaa0... }
+                  expira_em: { type: string, example: '2026-09-19T12:00:00.000Z' }
+                  usuario:
+                    $ref: '#/components/schemas/UsuarioBase'
+        '401':
+          $ref: '#/components/responses/Erro'
+        '429':
+          description: Muitas tentativas (rate limit 10/min por IP)
+
+  /api/sessao:
+    get:
+      tags: [Autenticação]
+      summary: Valida a sessão atual (troca senha, bloqueio)
+      responses:
+        '200':
+          description: Sessão válida
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UsuarioBase' }
+
+  /api/logout:
+    post:
+      tags: [Autenticação]
+      summary: Encerra a sessão e revoga o token
+      responses:
+        '200':
+          description: Sessão encerrada
+
+  /api/versao:
+    get:
+      tags: [Autenticação]
+      summary: Versão do aplicativo (aciona recarga dos clientes)
+      responses:
+        '200':
+          description: Versão atual
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  versao: { type: number, example: 1789734757049 }
+                  atualizado_em: { type: string, example: '2026-09-18T12:32:37.048Z' }
+
+  /api/estoque:
+    get:
+      tags: [Estoque]
+      summary: Lista itens de estoque com status de alerta
+      parameters:
+        - { name: busca, in: query, schema: { type: string } }
+        - { name: categoria, in: query, schema: { type: string } }
+        - { name: apenas_criticos, in: query, schema: { type: boolean } }
+      responses:
+        '200':
+          description: Lista de itens enriquecidos (status_alerta, dias_criticidade)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ItemEstoque' }
+    post:
+      tags: [Estoque]
+      summary: Cadastra item (código único)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [codigo_id, nome, categoria]
+              properties:
+                codigo_sku: { type: string, description: Alias de codigo_id, example: PAR-001 }
+                nome: { type: string, example: 'Parafuso Sextavado M8 x 25mm' }
+                categoria: { type: string, example: 'Parafusos e Fixadores' }
+                quantidade_atual: { type: number, default: 0 }
+                quantidade_minima: { type: number, default: 20 }
+                unidade_medida: { type: string, default: UN, enum: [UN, DZ, PC, MT, BR, RL, PAR] }
+                localizacao: { type: string, example: 'Gaveteiro A - Gaveta 01' }
+                preco_estimado: { type: number, default: 0 }
+      responses:
+        '201':
+          description: Item criado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ItemEstoque' }
+        '409':
+          description: Código já cadastrado
+
+  /api/estoque/{id}/movimento:
+    patch:
+      tags: [Estoque]
+      summary: Movimenta estoque (+/- delta) com histórico e alerta
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [delta]
+              properties:
+                delta:
+                  { type: integer, example: -5, description: Valores negativos saem do estoque }
+                motivo: { type: string, example: 'Solicitado canteiro 2' }
+      responses:
+        '200':
+          description: Movimento registrado
+        '400':
+          description: Delta inválido
+
+  /api/estoque/{id}:
+    put:
+      tags: [Estoque]
+      summary: Corrige item (código e nome)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                codigo_id: { type: string }
+                nome: { type: string }
+      responses:
+        '200':
+          description: Item atualizado
+    delete:
+      tags: [Estoque]
+      summary: Exclui item (ADMIN_MASTER)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: Item excluído
+        '403':
+          description: Exige perfil ADMIN_MASTER
+
+  /api/categorias:
+    get:
+      tags: [Estoque]
+      summary: Lista categorias
+      responses:
+        '200':
+          description: Categorias ordenadas alfabeticamente
+    post:
+      tags: [Estoque]
+      summary: Cria categoria (ADMIN_MASTER)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nome]
+              properties:
+                nome: { type: string, example: 'Insumos e Fitas' }
+      responses:
+        '201':
+          description: Categoria criada
+
+  /api/categorias/{id}:
+    put:
+      tags: [Estoque]
+      summary: Renomeia categoria (ADMIN_MASTER)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nome]
+              properties:
+                nome: { type: string }
+      responses:
+        '200':
+          description: Categoria renomeada
+    delete:
+      tags: [Estoque]
+      summary: Exclui categoria (ADMIN_MASTER)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: Categoria excluída
+
+  /api/equipamentos:
+    get:
+      tags: [Metrologia]
+      summary: Equipamentos com dias restantes de calibração
+      responses:
+        '200':
+          description: Lista enriquecida (status_calibracao, dias_restantes)
+    post:
+      tags: [Metrologia]
+      summary: Cadastra equipamento (TAG única)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tag_patrimonio, nome, data_validade_calibracao]
+              properties:
+                tag_patrimonio: { type: string, example: PAT-EL-001 }
+                nome: { type: string, example: 'Multímetro Digital True RMS' }
+                fabricante: { type: string, example: Fluke }
+                modelo: { type: string, example: 'Fluke 179' }
+                numero_serie: { type: string }
+                data_ultima_calibracao: { type: string, format: date }
+                data_validade_calibracao: { type: string, format: date }
+                laboratorio: { type: string }
+                certificado_num: { type: string }
+                responsavel: { type: string }
+      responses:
+        '201':
+          description: Equipamento cadastrado
+        '409':
+          description: TAG já cadastrada
+
+  /api/equipamentos/{id}:
+    put:
+      tags: [Metrologia]
+      summary: Atualiza / renova calibração (merge com valores existentes)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                responsavel: { type: string }
+                data_validade_calibracao: { type: string, format: date }
+      responses:
+        '200':
+          description: Equipamento atualizado
+    delete:
+      tags: [Metrologia]
+      summary: Exclui equipamento (ADMIN_MASTER)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: Equipamento excluído
+
+  /api/compras:
+    get:
+      tags: [Compras]
+      summary: Lista solicitações de compra
+      responses:
+        '200':
+          description: Solicitações ordenadas por data
+    post:
+      tags: [Compras]
+      summary: Emite solicitação + dispara alerta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [item_id]
+              properties:
+                item_id: { type: integer, example: 1 }
+                quantidade_solicitada: { type: number, default: 100 }
+                urgencia: { type: string, enum: [BAIXA, MEDIA, ALTA] }
+                observacao: { type: string }
+                solicitante: { type: string }
+                setor: { type: string }
+      responses:
+        '201':
+          description: Solicitação criada
+        '404':
+          description: Item de estoque não encontrado
+
+  /api/compras/{id}/status:
+    patch:
+      tags: [Compras]
+      summary: Altera status da solicitação (COMPRAS+)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: { type: string, example: APROVADA }
+      responses:
+        '200':
+          description: Status atualizado
+
+  /api/compras/{id}/feedback:
+    patch:
+      tags: [Compras]
+      summary: Atualiza feedback do setor de compras
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                feedback_compras: { type: string }
+                status: { type: string }
+      responses:
+        '200':
+          description: Feedback atualizado
+
+  /api/destinatarios:
+    get:
+      tags: [Compras]
+      summary: Lista destinatários de alertas (WhatsApp/e-mail)
+      responses:
+        '200':
+          description: Destinatários do banco
+
+  /api/destinatarios/{id}:
+    put:
+      tags: [Compras]
+      summary: Atualiza destinatário
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nome: { type: string }
+                cargo: { type: string }
+                telefone_whatsapp: { type: string }
+                email: { type: string }
+                ativo: { type: boolean }
+      responses:
+        '200':
+          description: Destinatário atualizado
+
+  /api/alertas/resumo:
+    get:
+      tags: [Compras]
+      summary: Resumo de alertas ativos (críticos e pendentes)
+      responses:
+        '200':
+          description: Resumo agregado de alertas
+
+  /api/alertas/disparar-multiplo:
+    post:
+      tags: [Compras]
+      summary: Dispara alertas em lote para múltiplos itens
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                itens: { type: array, items: { type: integer } }
+      responses:
+        '200':
+          description: Alertas disparados
+
+  /api/chat/contatos:
+    get:
+      tags: [Chat]
+      summary: Contatos ativos com última mensagem e não-lidas
+      responses:
+        '200':
+          description: Lista de contatos
+
+  /api/chat/{id}:
+    get:
+      tags: [Chat]
+      summary: Histórico da conversa
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: Conversa (outro usuário + mensagens)
+        '404':
+          description: Usuário não localizado
+    post:
+      tags: [Chat]
+      summary: Envia mensagem de texto e/ou foto (até 12 MB)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mensagem: { type: string, maxLength: 1000 }
+                imagem_base64:
+                  type: string
+                  description: 'data:image/...;base64,... (máximo de 4 MB)'
+      responses:
+        '201':
+          description: Mensagem enviada
+        '400':
+          description: Mensagem vazia, imagem inválida ou limite atingido
+
+  /api/chat/{id}/lidas:
+    post:
+      tags: [Chat]
+      summary: Marca mensagens recebidas como lidas
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: Marcação concluída
+
+  /api/chat/naolidas/total:
+    get:
+      tags: [Chat]
+      summary: Total de mensagens não lidas (badge)
+      responses:
+        '200':
+          description: Contagem
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total: { type: integer, example: 3 }
+
+  /api/chat/midia/{id}:
+    get:
+      tags: [Chat]
+      summary: Serve foto do chat (URL pública com id aleatório)
+      security: []
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Imagem binária
+          content:
+            image/jpeg: {}
+            image/png: {}
+        '404':
+          description: Imagem não encontrada
+
+  /api/notificacoes:
+    get:
+      tags: [Notificações]
+      summary: Lista notificações do usuário
+      responses:
+        '200':
+          description: Lista
+    post:
+      tags: [Notificações]
+      summary: Cria notificação manual
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                titulo: { type: string }
+                mensagem: { type: string }
+      responses:
+        '201':
+          description: Notificação criada
+
+  /api/notificacoes/lidas:
+    post:
+      tags: [Notificações]
+      summary: Marca notificações como lidas
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids: { type: array, items: { type: integer }, description: Vazio marca todas }
+      responses:
+        '200':
+          description: Marcadas
+
+  /api/observacoes:
+    get:
+      tags: [Notificações]
+      summary: Lista observações
+      responses:
+        '200':
+          description: Lista
+    post:
+      tags: [Notificações]
+      summary: Cria observação
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                texto: { type: string }
+      responses:
+        '201':
+          description: Observação criada
+
+  /api/observacoes/{id}:
+    delete:
+      tags: [Notificações]
+      summary: Exclui observação
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: Observação removida
+
+  /api/observacoes/{id}/status:
+    patch:
+      tags: [Notificações]
+      summary: Resolve observação
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: { type: string, enum: [pendente, resolvida] }
+      responses:
+        '200':
+          description: Status atualizado
+
+  /api/usuarios:
+    get:
+      tags: [Administração]
+      summary: Lista usuários (ADMIN_MASTER)
+      responses:
+        '200':
+          description: Lista com bloqueio calculado
+    post:
+      tags: [Administração]
+      summary: Cria usuário com role (ADMIN_MASTER)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, senha, nome_completo]
+              properties:
+                username: { type: string, example: maria01 }
+                senha: { type: string, minLength: 6 }
+                nome_completo: { type: string }
+                cargo: { type: string, default: Operador }
+                role:
+                  {
+                    type: string,
+                    enum: [ADMIN_MASTER, OPERADOR, COMPRAS, CONSULTA],
+                    default: OPERADOR,
+                  }
+      responses:
+        '201':
+          description: Usuário criado
+        '409':
+          description: Username já existe
+
+  /api/usuarios/{id}:
+    put:
+      tags: [Administração]
+      summary: Edita dados/role ou redefine senha (ADMIN_MASTER)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nome_completo: { type: string }
+                cargo: { type: string }
+                role: { type: string }
+                ativo: { type: boolean }
+                nova_senha: { type: string, minLength: 6 }
+      responses:
+        '200':
+          description: Usuário atualizado
+    delete:
+      tags: [Administração]
+      summary: Exclui usuário (proteção do último admin)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: Usuário excluído
+        '400':
+          description: Não pode excluir a si mesmo ou o último ADMIN_MASTER
+
+  /api/usuarios/{id}/desbloquear:
+    post:
+      tags: [Administração]
+      summary: Desbloqueia conta bloqueada por brute-force
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: Conta desbloqueada
+
+  /api/auditoria:
+    get:
+      tags: [Administração]
+      summary: Últimos 200 eventos de segurança (ADMIN_MASTER)
+      responses:
+        '200':
+          description: Trilha de auditoria (usuario, evento, IP, data)
+
+  /api/nuvem/status:
+    get:
+      tags: [Nuvem e Backup]
+      summary: Estado da conexão com o Google Drive (tela de login)
+      security: []
+      responses:
+        '200':
+          description: Estado da nuvem (configurado, conectado, data_ultimo)
+
+  /api/nuvem/login:
+    get:
+      tags: [Nuvem e Backup]
+      summary: Redireciona para o OAuth do Google
+      security: []
+      responses:
+        '302':
+          description: Redireciona para accounts.google.com
+
+  /api/nuvem/oauth2/callback:
+    get:
+      tags: [Nuvem e Backup]
+      summary: Retorno do Google (troca code por token e envia 1º backup)
+      security: []
+      parameters:
+        - { name: code, in: query, required: true, schema: { type: string } }
+      responses:
+        '302':
+          description: Redireciona para /login.html?nuvem=ok (ou =erro)
+
+  /api/nuvem/config:
+    post:
+      tags: [Nuvem e Backup]
+      summary: Salva credenciais do app Google (ADMIN_MASTER)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [client_id, client_secret]
+              properties:
+                client_id: { type: string }
+                client_secret: { type: string }
+      responses:
+        '200':
+          description: Credenciais salvas
+
+  /api/nuvem/enviar:
+    post:
+      tags: [Nuvem e Backup]
+      summary: Envia backup para o Google Drive agora (ADMIN_MASTER)
+      responses:
+        '200':
+          description: Backup enviado (ou nuvem já atualizada)
+        '400':
+          description: Sem credenciais ou sem tokens
+
+  /api/nuvem/restaurar:
+    post:
+      tags: [Nuvem e Backup]
+      summary: Baixa a versão mais recente da nuvem (ADMIN_MASTER)
+      responses:
+        '200':
+          description: Backup baixado (aplicar em reinício)
+
+  /api/nuvem/desconectar:
+    post:
+      tags: [Nuvem e Backup]
+      summary: Desconecta conta Google (ADMIN_MASTER)
+      responses:
+        '200':
+          description: Nuvem desconectada
+
+  /api/backup:
+    post:
+      tags: [Nuvem e Backup]
+      summary: Gera backup local manual (ADMIN_MASTER)
+      responses:
+        '200':
+          description: Backup criado (caminho + tamanho)
+
+  /api/backup/status:
+    get:
+      tags: [Nuvem e Backup]
+      summary: Status e lista de backups locais (ADMIN_MASTER)
+      responses:
+        '200':
+          description: Último backup, recentes e tamanho do banco
+
+  /api/atualizacao/status:
+    get:
+      tags: [Nuvem e Backup]
+      summary: Versão atual vs versão na nuvem (ADMIN_MASTER)
+      responses:
+        '200':
+          description: Se há atualização disponível
+
+  /api/atualizacao/aplicar:
+    post:
+      tags: [Nuvem e Backup]
+      summary: Aplica pacote OTA baixado da nuvem e reinicia (ADMIN_MASTER)
+      responses:
+        '200':
+          description: Atualização aplicada, reiniciando
+        '404':
+          description: Nenhum pacote de atualização na nuvem
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    UsuarioBase:
+      type: object
+      properties:
+        id: { type: integer, example: 1 }
+        username: { type: string, example: anderson }
+        nome_completo: { type: string }
+        cargo: { type: string }
+        role: { type: string, enum: [ADMIN_MASTER, OPERADOR, COMPRAS, CONSULTA] }
+        ativo: { type: boolean }
+        bloqueado: { type: boolean }
+        ultimo_login: { type: string, nullable: true }
+
+    ItemEstoque:
+      type: object
+      properties:
+        id: { type: integer }
+        codigo_id: { type: string }
+        nome: { type: string }
+        categoria: { type: string }
+        quantidade_atual: { type: number }
+        quantidade_minima: { type: number }
+        unidade_medida: { type: string }
+        localizacao: { type: string }
+        preco_estimado: { type: number }
+        status_alerta: { type: string, enum: [CRITICO, ATENCAO, OK] }
+        dias_criticidade: { type: integer, nullable: true }
+
+  responses:
+    Erro:
+      description: Erro de negócio ou validação
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              erro: { type: string }
+              detalhes: { type: string, nullable: true }
+
+security:
+  - bearerAuth: []

@@ -2,10 +2,10 @@
   "name": "almoxarifado-inteligente",
   "version": "1.0.0",
   "description": "Sistema inteligente de gestão de almoxarifado com backup automático, sincronização Google Drive, chat privado, auditoria completa e atualização over-the-air",
-  "main": "server.js",
+  "main": "src/index.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js",
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -31,10 +31,12 @@
     "node": ">=22.13.0"
   },
   "dependencies": {
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "pg": "^8.23.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@redocly/cli": "^2.53.3",
     "eslint": "^10.10.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.0",

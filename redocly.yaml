@@ -1,0 +1,13 @@
+# Validação da especificação OpenAPI (docs/api/openapi.yaml).
+# Ruleset Redocly usado localmente e no CI (`npx --yes @redocly/cli lint`).
+extends:
+  - recommended
+rules:
+  # O projeto documenta operações com summaries em pt-BR; operationId opcional.
+  operation-operationId: off
+  operation-2xx-response: off
+  operation-4xx-response: off
+  # Servidor localhost é o padrão de dev; o deploy real vai no Render.
+  struct: error
+  path-parameters-defined: error
+  no-required-schema-properties-undefined: warn

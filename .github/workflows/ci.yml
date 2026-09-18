@@ -39,6 +39,9 @@ jobs:
       - name: Check Prettier formatting
         run: npx prettier --check .
 
+      - name: Validate OpenAPI specification
+        run: npx redocly lint docs/api/openapi.yaml
+
   security-audit:
     name: Security Audit
     runs-on: ubuntu-latest
@@ -77,10 +80,46 @@ jobs:
       - name: Run tests
         run: npm test
 
+  test-postgres:
+    name: Tests (PostgreSQL)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: almoxarifado_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_DRIVER: postgres
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/almoxarifado_test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests against PostgreSQL
+        run: npm test
+
   build:
     name: Build Verification
     runs-on: ubuntu-latest
-    needs: [lint-and-format, security-audit, test]
+    needs: [lint-and-format, security-audit, test, test-postgres]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -96,6 +135,7 @@ jobs:
 
       - name: Verify server syntax
         run: |
-          node --check server.js
-          node --check database.js
-          node --check nuvem.js
+          node --check src/index.js
+          node --check src/app.js
+          node --check src/database.js
+          node --check src/nuvem.js

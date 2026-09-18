@@ -14,7 +14,7 @@ let servidor = null;
 
 function iniciarServidor() {
   return new Promise((resolve, reject) => {
-    const processo = spawn(process.execPath, ['server.js'], {
+    const processo = spawn(process.execPath, ['src/index.js'], {
       cwd: RAIZ,
       env: {
         ...process.env,
