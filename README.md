@@ -18,7 +18,8 @@
 >
 > **[almoxarifado-inteligente.onrender.com](https://almoxarifado-inteligente.onrender.com)**
 > — login `anderson` / password `demo-almox-2026`.
-> Runs on a free Render instance: data resets when the service restarts.
+> Free Render instance: it sleeps when idle (first load ~50s) and data
+> resets on restart.
 
 ---
 
