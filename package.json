@@ -12,7 +12,7 @@
     "format:check": "prettier --check .",
     "test": "node --test",
     "audit": "npm audit --audit-level=high",
-    "prepare": "husky install"
+    "prepare": "husky || exit 0"
   },
   "keywords": [
     "almoxarifado",
