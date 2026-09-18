@@ -16,7 +16,7 @@
 
 > ### ▶️ Live demo
 >
-> **[almoxarifado-inteligente.onrender.com](https://almoxarifado-inteligente.onrender.com)**
+> **[almoxarifadoproject.onrender.com](https://almoxarifadoproject.onrender.com)**
 > — login `anderson` / password `demo-almox-2026`.
 > Free Render instance: it sleeps when idle (first load ~50s) and data
 > resets on restart.
