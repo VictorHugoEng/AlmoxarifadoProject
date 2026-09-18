@@ -99,34 +99,3 @@ jobs:
           node --check server.js
           node --check database.js
           node --check nuvem.js
-
-  deploy-staging:
-    name: Deploy to Staging
-    runs-on: ubuntu-latest
-    needs: [build]
-    if: github.ref == 'refs/heads/develop'
-    steps:
-      - name: Deploy to staging
-        run: echo "Deploy to staging environment"
-        # Adicione aqui seu deploy real (Vercel, Railway, VPS, etc.)
-
-  deploy-production:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    needs: [build]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment: production
-    steps:
-      - name: Deploy to production
-        run: echo "Deploy to production environment"
-        # Adicione aqui seu deploy real
-
-  notify:
-    name: Notify on Failure
-    runs-on: ubuntu-latest
-    needs: [lint-and-format, security-audit, test, build]
-    if: failure()
-    steps:
-      - name: Send failure notification
-        run: echo "Pipeline failed - check GitHub Actions"
-        # Adicione webhook Discord/Slack/Email aqui

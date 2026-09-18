@@ -306,14 +306,6 @@ pm2 startup
 pm2 save
 ```
 
-### Deploy com 1 clique (Render)
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/VictorHugoEng/AlmoxarifadoProject)
-
-O blueprint [`render.yaml`](render.yaml) cria um serviço web gratuito que define
-`HOST=0.0.0.0` e uma senha de admin de demonstração via `ALMOX_ADMIN_PASSWORD`. A instância
-gratuita usa disco **efêmero** — os dados resetam ao reiniciar, o que é ideal para um demo.
-
 ### Docker (qualquer provedor)
 
 O [`Dockerfile`](Dockerfile) já está pronto:

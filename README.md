@@ -14,13 +14,6 @@
 
 🇧🇷 [Leia em Português (BR)](README.pt-BR.md)
 
-> ### ▶️ Live demo
->
-> **[almoxarifadoproject.onrender.com](https://almoxarifadoproject.onrender.com)**
-> — login `anderson` / password `demo-almox-2026`.
-> Free Render instance: it sleeps when idle (first load ~50s) and data
-> resets on restart.
-
 ---
 
 ## Screenshots
@@ -137,9 +130,6 @@ Password: 123456      # local default
 Role:     ADMIN_MASTER
 ```
 
-> On the **live demo** the password is `demo-almox-2026` (set by `render.yaml` through
-> `ALMOX_ADMIN_PASSWORD`). Locally the default is `123456`.
->
 > ⚠️ **Change the password immediately after the first login.**
 
 ## Configuration
@@ -294,15 +284,6 @@ pm2 start server.js --name almoxarifado
 pm2 startup
 pm2 save
 ```
-
-### One-click deploy (Render)
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/VictorHugoEng/AlmoxarifadoProject)
-
-The [`render.yaml`](render.yaml) blueprint provisions a free Node web service that sets
-`HOST=0.0.0.0` and a demo admin password via `ALMOX_ADMIN_PASSWORD`. The free instance uses
-an **ephemeral filesystem** — data resets on restart, which is exactly what you want for a
-demo.
 
 ### Docker (any provider)
 
