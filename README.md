@@ -16,6 +16,23 @@
 
 ---
 
+## Screenshots
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/dashboard.png" alt="Dashboard"><br><sub><b>Dashboard</b> — key metrics and low-stock alerts</sub></td>
+    <td width="50%"><img src="docs/screenshots/estoque.png" alt="Inventory"><br><sub><b>Inventory</b> — items, categories and critical-level alerts</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/calibracao.png" alt="Calibration"><br><sub><b>Calibration</b> — equipment and expiry tracking</sub></td>
+    <td><img src="docs/screenshots/compras.png" alt="Purchase requests"><br><sub><b>Purchase requests</b> — status workflow and buyer feedback</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/chat.png" alt="Private chat"><br><sub><b>Private chat</b> — 1-to-1 messages with attachments</sub></td>
+    <td><img src="docs/screenshots/administrador.png" alt="Admin"><br><sub><b>Admin</b> — users, roles, audit log and backups</sub></td>
+  </tr>
+</table>
+
 ## Why this project
 
 This is not a tutorial clone — it is a **system running in production** for a small
@@ -250,6 +267,7 @@ AlmoxarifadoProject/
 │   └── manifest.webmanifest
 ├── test/
 │   └── smoke.test.js      # Boot + login + version smoke test
+├── docs/screenshots/      # Application screenshots
 ├── converte-para-pdf/     # Optional PDF microservice
 └── backups/               # Local backups (gitignored)
 ```
