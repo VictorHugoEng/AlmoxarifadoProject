@@ -22,9 +22,28 @@
 | **Autenticação**    | Tokens 256-bit + scrypt + rate limiting + brute-force protection |
 | **Autorização**     | RBAC: `ADMIN_MASTER`, `OPERADOR`, `COMPRAS`, `CONSULTA`          |
 | **Backup**          | Local (30 dias) + Google Drive (contínuo) + auto-recovery        |
-| **Tempo real**      | Chat 1-a-1 com imagens no banco + notificações (sininho)         |
+| **Chat**            | Mensagens 1-a-1 com imagens no banco + notificações (sininho)    |
 | **Atualização**     | Over-the-air via Google Drive (código + versão)                  |
-| **Observabilidade** | Auditoria completa (padrão bancário) + health checks             |
+| **Observabilidade** | Auditoria completa (log de ações) + health checks                |
+
+---
+
+## 📸 Capturas de Tela
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/dashboard.png" alt="Dashboard"><br><sub><b>Dashboard</b> — indicadores e alertas de estoque crítico</sub></td>
+    <td width="50%"><img src="docs/screenshots/estoque.png" alt="Estoque"><br><sub><b>Almoxarifado</b> — itens, categorias e nível crítico</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/calibracao.png" alt="Calibração"><br><sub><b>Calibração</b> — equipamentos e vencimentos</sub></td>
+    <td><img src="docs/screenshots/compras.png" alt="Compras"><br><sub><b>Compras</b> — fluxo de status e feedback</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/chat.png" alt="Chat"><br><sub><b>Chat</b> — mensagens 1-a-1 com anexos</sub></td>
+    <td><img src="docs/screenshots/administrador.png" alt="Administrador"><br><sub><b>Administrador</b> — usuários, auditoria e backup</sub></td>
+  </tr>
+</table>
 
 ---
 
@@ -264,6 +283,7 @@ AlmoxarifadoProject/
 │   ├── style.css
 │   ├── sw.js              # Service Worker (offline-first)
 │   └── manifest.webmanifest
+├── docs/screenshots/      # Capturas de tela da aplicação
 ├── converte-para-pdf/     # Microsserviço PDF (opcional)
 └── backups/               # Backups locais (gitignored)
 ```

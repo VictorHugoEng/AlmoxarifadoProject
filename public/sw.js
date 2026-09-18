@@ -1,5 +1,5 @@
 // ============================================================
-// SERVIL PWA - SERVICE WORKER
+// ALMOXARIFADO INTELIGENTE - SERVICE WORKER
 // Cacheia só a tela/estilos/ícones (casca do app).
 // NUNCA cacheia /api (dados sempre vêm do servidor em tempo real).
 // ============================================================
