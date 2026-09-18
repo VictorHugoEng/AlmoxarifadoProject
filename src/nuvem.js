@@ -1,3 +1,5 @@
+'use strict';
+
 // ============================================================
 // NUVEM (GOOGLE DRIVE) — BACKUP AUTOMÁTICO NA CONTA GOOGLE
 // ============================================================
@@ -9,9 +11,11 @@
 //  - Ao ligar o servidor, baixa a versão mais recente da nuvem (caso outro
 //    computador tenha trabalhado)
 // ============================================================
+
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const config = require('./config');
 
 // Acesso tardio ao banco: evita dependência circular com database.js
 // (que chama a nuvem durante a recuperação automática de boot).
@@ -22,8 +26,8 @@ function caminhoDoBanco() {
   return pegarDatabase().DB_PATH;
 }
 
-const ARQUIVO_CONFIG = process.env.ALMOX_CONFIG_PATH || path.join(__dirname, 'nuvem_config.json');
-const PASTA_BACKUPS = path.join(__dirname, 'backups');
+const ARQUIVO_CONFIG = config.configPath;
+const PASTA_BACKUPS = config.paths.backups;
 
 const NOME_PASTA_DRIVE = 'Almoxarifado Inteligente Backup';
 const NOME_ARQUIVO_DRIVE = 'voltstock_live.db';
@@ -343,7 +347,7 @@ async function enviarBackupNuvem() {
 
   sincronizando = true;
   try {
-    pegarDatabase().db.exec('PRAGMA wal_checkpoint(FULL);');
+    await pegarDatabase().db.exec('PRAGMA wal_checkpoint(FULL);');
     if (!fs.existsSync(caminhoDoBanco())) {
       return { ok: false, erro: 'Banco de dados não encontrado' };
     }
@@ -502,8 +506,6 @@ const DEBOUNCE_NUVEM_MS = 1200; // agrupa alterações em rajada; sobe quase ins
 async function sincronizarAgora() {
   if (!temCliente() || !temTokens()) return;
   if (sincronizando) {
-    // Já existe envio em andamento: marca para reenviar assim que terminar,
-    // assim NUNCA perdemos a última alteração feita.
     nuvemPendente = true;
     return;
   }

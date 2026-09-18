@@ -8,7 +8,6 @@ module.exports = [
       'node_modules/**',
       'backups/**',
       'pacotes_enviados/**',
-      'converte-para-pdf/**',
       'public/**',
       '.kilo/**',
       'docs/**',
@@ -41,20 +40,6 @@ module.exports = [
       'prefer-arrow-callback': 'warn',
       'no-empty': 'warn',
       'no-useless-escape': 'warn',
-    },
-  },
-  {
-    files: ['server.js', 'database.js', 'nuvem.js'],
-    rules: {
-      'prettier/prettier': 'off',
-      curly: 'off',
-      eqeqeq: 'off',
-      'no-var': 'off',
-      'prefer-const': 'off',
-      'object-shorthand': 'off',
-      'prefer-arrow-callback': 'off',
-      'no-empty': 'off',
-      'no-useless-escape': 'off',
     },
   },
 ];

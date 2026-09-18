@@ -2,11 +2,7 @@ node_modules/
 backups/
 pacotes_enviados/
 public/
-converte-para-pdf/
 package-lock.json
-server.js
-database.js
-nuvem.js
 *.db
 *.db-shm
 *.db-wal
