@@ -1,0 +1,20 @@
+# Blueprint do Render para o Almoxarifado Inteligente.
+# Usa o Dockerfile do projeto (Node 24 Alpine) para um ambiente 100% determinístico.
+# Deploy com 1 clique: https://render.com/deploy?repo=...
+services:
+  - type: web
+    name: almoxarifado-inteligente
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    autoDeploy: true
+    region: oregon
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: ALMOX_ADMIN_PASSWORD
+        sync: false
+        value: demo-admin-2026

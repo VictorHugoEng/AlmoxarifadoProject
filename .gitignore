@@ -1,16 +1,39 @@
+# Dependências
 node_modules/
-*.log
+
+# Ambiente e segredos
+.env
+.env.*
+!.env.example
+nuvem_config.json
+
+# Banco de dados e backups
 *.db
 *.db-shm
 *.db-wal
 *.mbtree
 backups/
-pacotes_enviados/
-public/uploads/
+atualizacao_pendente/
+
+# Logs e caches
+*.log
+npm-debug.log*
+.eslintcache
+coverage/
+
+# Ficheiros temporários do SO/editor
+.DS_Store
+Thumbs.db
 .vscode/
 .kilo/
+
+# Pastas de dados local do proprietário do projeto (não fazem parte do produto)
+pacotes_enviados/
+public/uploads/
+converte-para-pdf/
+
+# Ferramentas locais específicas do proprietário (ngrok, deploy manual, OTA)
 configurar_ngrok.bat
-CONTEXTO_SERVMIL.md
 DEPLOYAR_NO_PC_DO_AMIGO.txt
 gerar_enviar_pacote.bat
 gerar_enviar_pacote.js
@@ -20,7 +43,6 @@ iniciar_remoto.bat
 INSTRUCOES.txt
 LINK_REMOTO.txt
 NGROK_DOMAIN.txt
-nuvem_config.json
 parar_remoto.bat
-versao.txt
 zerar_dados.bat
+CONTEXTO_SERVMIL.md

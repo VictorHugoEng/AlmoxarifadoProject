@@ -24,5 +24,6 @@ pacotes_enviados
 *.mbtree
 *.bat
 *.txt
+!versao.txt
 
 nuvem_config.json
