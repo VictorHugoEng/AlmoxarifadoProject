@@ -351,14 +351,15 @@ function initDatabase() {
 
   // ============================================================
   // CRIAÇÃO DO SUPER USUÁRIO MASTER ADMINISTRADOR
-  // LOGIN: anderson | SENHA: 123456
+  // LOGIN: anderson | SENHA: 123456 (ou o valor de ALMOX_ADMIN_PASSWORD)
   // Só cria na PRIMEIRA execução (tabela de usuários vazia).
   // NÃO recria nem força senha nas execuções seguintes.
   // ============================================================
   const totalUsuarios = db.prepare('SELECT COUNT(*) AS total FROM usuarios').get().total;
   if (totalUsuarios === 0) {
+    const senhaInicial = process.env.ALMOX_ADMIN_PASSWORD || '123456';
     console.log('[Segurança] Cadastrando Administrador Master (anderson)...');
-    const { salt, hash } = gerarHashSenha('123456');
+    const { salt, hash } = gerarHashSenha(senhaInicial);
 
     db.prepare(
       `

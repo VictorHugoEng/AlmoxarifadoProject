@@ -136,12 +136,14 @@ Role:     ADMIN_MASTER
 
 ### Environment variables
 
-| Variable            | Default               | Purpose                                                  |
-| ------------------- | --------------------- | -------------------------------------------------------- |
-| `PORT`              | `3000`                | HTTP port                                                |
-| `ALMOX_DB_PATH`     | `./voltstock.db`      | Custom database path (also isolates boot-time recovery)  |
-| `ALMOX_CONFIG_PATH` | `./nuvem_config.json` | Custom Google Drive credentials file path                |
-| `ALMOX_NO_RECOVER`  | _(unset)_             | `1` disables boot-time recovery (used by isolated tests) |
+| Variable               | Default               | Purpose                                                  |
+| ---------------------- | --------------------- | -------------------------------------------------------- |
+| `PORT`                 | `3000`                | HTTP port                                                |
+| `HOST`                 | `127.0.0.1`           | Bind address (`0.0.0.0` in containers/PaaS)              |
+| `ALMOX_DB_PATH`        | `./voltstock.db`      | Custom database path (also isolates boot-time recovery)  |
+| `ALMOX_CONFIG_PATH`    | `./nuvem_config.json` | Custom Google Drive credentials file path                |
+| `ALMOX_ADMIN_PASSWORD` | `123456`              | Initial admin password (first run only; change it)       |
+| `ALMOX_NO_RECOVER`     | _(unset)_             | `1` disables boot-time recovery (used by isolated tests) |
 
 Google Drive credentials are **not** environment variables — they are configured through
 the admin UI and stored in `nuvem_config.json` (kept out of version control).
@@ -283,21 +285,22 @@ pm2 startup
 pm2 save
 ```
 
-### Docker
+### One-click deploy (Render)
 
-```dockerfile
-FROM node:24-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --omit=dev
-COPY . .
-EXPOSE 3000
-CMD ["node", "server.js"]
-```
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/VictorHugoEng/AlmoxarifadoProject)
+
+The [`render.yaml`](render.yaml) blueprint provisions a free Node web service that sets
+`HOST=0.0.0.0` and a demo admin password via `ALMOX_ADMIN_PASSWORD`. The free instance uses
+an **ephemeral filesystem** — data resets on restart, which is exactly what you want for a
+demo.
+
+### Docker (any provider)
+
+A ready-to-use [`Dockerfile`](Dockerfile) is included:
 
 ```bash
 docker build -t almoxarifado .
-docker run -d -p 3000:3000 -v ./data:/app/data almoxarifado
+docker run -d -p 3000:3000 -e ALMOX_ADMIN_PASSWORD=change-me almoxarifado
 ```
 
 ### systemd (Linux)

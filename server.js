@@ -7,6 +7,9 @@ const nuvem = require('./nuvem');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+// Por padrão escuta apenas localhost (ngrok/túnel ou o próprio PC).
+// Em containers/PaaS (Docker, Render, Railway...) defina HOST=0.0.0.0.
+const HOST = process.env.HOST || '127.0.0.1';
 
 // ==========================================
 // SISTEMA DE BACKUP AUTOMÁTICO (NUNCA PERDER DADOS)
@@ -2326,12 +2329,13 @@ function podarRegistrosPesados() {
 setTimeout(podarRegistrosPesados, 60000);
 setInterval(podarRegistrosPesados, 6 * 60 * 60 * 1000);
 
-// Inicia servidor (encapsulado no localhost: só o ngrok/túnel ou o próprio PC acessam)
-app.listen(PORT, '127.0.0.1', () => {
+// Inicia servidor. Por padrão: encapsulado no localhost (só o ngrok/túnel ou o próprio PC
+// acessam). Em containers/PaaS defina HOST=0.0.0.0 para aceitar conexões externas.
+app.listen(PORT, HOST, () => {
   console.log(`====================================================`);
   console.log(`⚡ ALMOXARIFADO INTELIGENTE // SISTEMA DE ESTOQUE & CALIBRAÇÃO`);
-  console.log(`Servidor ativo em: http://localhost:${PORT}`);
+  console.log(`Servidor ativo em: http://${HOST}:${PORT}`);
   console.log(`Banco de dados: voltstock.db (SQLite nativo)`);
-  console.log(`[Segurança] Porta restrita ao localhost + rate limit + headers ativos`);
+  console.log(`[Segurança] Rate limit + headers ativos (bind: ${HOST})`);
   console.log(`====================================================`);
 });
